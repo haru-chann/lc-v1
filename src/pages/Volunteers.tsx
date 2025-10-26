@@ -86,7 +86,7 @@ const Volunteers = () => {
             {volunteers.map((volunteer, index) => (
               <div
                 key={volunteer.id}
-                className="group relative bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-large transition-smooth border border-border animate-fade-in"
+                className="group relative bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-large transition-glow border border-border hover-glow-strong neon-border animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {/* Image */}
@@ -99,8 +99,8 @@ const Volunteers = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
                   
                   {/* Hover Info */}
-                  <div className="absolute inset-0 bg-primary/90 opacity-0 group-hover:opacity-100 transition-smooth flex flex-col items-center justify-center p-6 text-center">
-                    <Heart className="text-primary-foreground mb-4" size={32} />
+                  <div className="absolute inset-0 bg-primary/90 opacity-0 group-hover:opacity-100 transition-glow flex flex-col items-center justify-center p-6 text-center shadow-[inset_0_0_60px_rgba(255,127,107,0.4)]">
+                    <Heart className="text-primary-foreground mb-4 animate-pulse-glow" size={32} />
                     <p className="text-primary-foreground italic leading-relaxed">
                       "{volunteer.quote}"
                     </p>
@@ -119,13 +119,13 @@ const Volunteers = () => {
                   <div className="flex gap-3 pt-2">
                     <a
                       href="#"
-                      className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
+                      className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-glow hover:shadow-[0_0_25px_rgba(255,127,107,0.6)] hover:scale-110"
                     >
                       <Linkedin size={18} />
                     </a>
                     <a
                       href="#"
-                      className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
+                      className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-glow hover:shadow-[0_0_25px_rgba(255,127,107,0.6)] hover:scale-110"
                     >
                       <Mail size={18} />
                     </a>

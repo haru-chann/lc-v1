@@ -62,7 +62,7 @@ const Index = () => {
                 className="rounded-3xl shadow-large w-full h-auto object-cover"
               />
               {/* Floating coral accents */}
-              <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-float"></div>
+              <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-float animate-pulse-glow"></div>
               <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-secondary/40 rounded-full blur-3xl animate-float" style={{ animationDelay: "1s" }}></div>
             </div>
           </div>
@@ -82,8 +82,8 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="group bg-card rounded-2xl p-8 shadow-soft hover:shadow-medium transition-smooth border border-border">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-smooth">
+            <div className="group bg-card rounded-2xl p-8 shadow-soft hover:shadow-large transition-smooth border border-border hover-glow-strong neon-border">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-glow group-hover:shadow-[0_0_30px_rgba(255,127,107,0.5)]">
                 <Calendar className="text-primary" size={32} />
               </div>
               <h3 className="text-2xl font-bold mb-4">Live Sessions</h3>
@@ -93,8 +93,8 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="group bg-card rounded-2xl p-8 shadow-soft hover:shadow-medium transition-smooth border border-border">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-smooth">
+            <div className="group bg-card rounded-2xl p-8 shadow-soft hover:shadow-large transition-smooth border border-border hover-glow-strong neon-border">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-glow group-hover:shadow-[0_0_30px_rgba(255,127,107,0.5)]">
                 <Users className="text-primary" size={32} />
               </div>
               <h3 className="text-2xl font-bold mb-4">Peer Support</h3>
@@ -104,8 +104,8 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="group bg-card rounded-2xl p-8 shadow-soft hover:shadow-medium transition-smooth border border-border">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-smooth">
+            <div className="group bg-card rounded-2xl p-8 shadow-soft hover:shadow-large transition-smooth border border-border hover-glow-strong neon-border">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-glow group-hover:shadow-[0_0_30px_rgba(255,127,107,0.5)]">
                 <Heart className="text-primary" size={32} />
               </div>
               <h3 className="text-2xl font-bold mb-4">Resources</h3>

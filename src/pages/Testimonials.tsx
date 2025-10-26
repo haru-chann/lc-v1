@@ -80,7 +80,7 @@ const Testimonials = () => {
             {testimonials.map((testimonial, index) => (
               <div
                 key={testimonial.id}
-                className="group bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-large transition-smooth border border-border animate-fade-in"
+                className="group bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-large transition-glow border border-border hover-glow-strong neon-border animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {/* Video Thumbnail */}
@@ -91,7 +91,7 @@ const Testimonials = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-smooth duration-500"
                   />
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-smooth">
-                    <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,127,107,0.8)] group-hover:scale-110 transition-glow">
                       <Play className="text-primary-foreground ml-1" size={28} />
                     </div>
                   </div>

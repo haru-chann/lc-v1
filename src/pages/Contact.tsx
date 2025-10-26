@@ -59,7 +59,7 @@ const Contact = () => {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
             {/* Contact Form */}
-            <div className="bg-card rounded-2xl p-8 shadow-medium border border-border animate-fade-in">
+            <div className="bg-card rounded-2xl p-8 shadow-medium border border-border animate-fade-in hover-glow neon-border">
               <h2 className="text-3xl font-bold mb-6">Send us a Message</h2>
               
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -114,12 +114,12 @@ const Contact = () => {
 
             {/* Contact Info */}
             <div className="space-y-8 animate-fade-in-up">
-              <div className="bg-card rounded-2xl p-8 shadow-soft border border-border">
+              <div className="bg-card rounded-2xl p-8 shadow-soft border border-border hover-glow neon-border">
                 <h2 className="text-3xl font-bold mb-6">Contact Information</h2>
                 
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:shadow-[0_0_25px_rgba(255,127,107,0.4)] transition-glow">
                       <Mail className="text-primary" size={24} />
                     </div>
                     <div>
@@ -159,7 +159,7 @@ const Contact = () => {
               </div>
 
               {/* Social Media */}
-              <div className="bg-card rounded-2xl p-8 shadow-soft border border-border">
+              <div className="bg-card rounded-2xl p-8 shadow-soft border border-border hover-glow neon-border">
                 <h3 className="text-xl font-bold mb-4">Connect With Us</h3>
                 <p className="text-muted-foreground mb-6">
                   Follow us on social media for updates, resources, and community stories.
@@ -169,7 +169,7 @@ const Contact = () => {
                     href="https://instagram.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
+                    className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-glow hover:shadow-[0_0_30px_rgba(255,127,107,0.6)] hover:scale-110"
                   >
                     <Instagram size={24} />
                   </a>
@@ -177,13 +177,13 @@ const Contact = () => {
                     href="https://linkedin.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
+                    className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-glow hover:shadow-[0_0_30px_rgba(255,127,107,0.6)] hover:scale-110"
                   >
                     <Linkedin size={24} />
                   </a>
                   <a
                     href="mailto:hello@innerglow.com"
-                    className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
+                    className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-glow hover:shadow-[0_0_30px_rgba(255,127,107,0.6)] hover:scale-110"
                   >
                     <Mail size={24} />
                   </a>

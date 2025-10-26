@@ -93,11 +93,11 @@ const Events = () => {
             {events.map((event, index) => (
               <div
                 key={event.id}
-                className="group bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-large transition-smooth border border-border animate-fade-in"
+                className="group bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-large transition-glow border border-border hover-glow-strong neon-border animate-fade-in"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="bg-gradient-to-br from-primary/20 to-secondary/30 h-32 flex items-center justify-center">
-                  <Calendar className="text-primary" size={48} />
+                <div className="bg-gradient-to-br from-primary/20 to-secondary/30 h-32 flex items-center justify-center group-hover:shadow-[inset_0_0_40px_rgba(255,127,107,0.3)] transition-glow">
+                  <Calendar className="text-primary group-hover:scale-110 transition-glow" size={48} />
                 </div>
                 
                 <div className="p-6 space-y-4">

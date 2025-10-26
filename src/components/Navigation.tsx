@@ -36,10 +36,10 @@ const Navigation = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`px-4 py-2 rounded-lg font-medium transition-smooth ${
+                className={`px-4 py-2 rounded-lg font-medium transition-glow ${
                   isActive(link.path)
-                    ? "bg-primary text-primary-foreground"
-                    : "hover:bg-secondary"
+                    ? "bg-primary text-primary-foreground shadow-[0_0_25px_rgba(255,127,107,0.4)]"
+                    : "hover:bg-secondary hover:shadow-[0_0_20px_rgba(255,243,199,0.5)] hover:scale-105"
                 }`}
               >
                 {link.label}
@@ -70,10 +70,10 @@ const Navigation = () => {
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsOpen(false)}
-                  className={`px-4 py-3 rounded-lg font-medium transition-smooth ${
+                  className={`px-4 py-3 rounded-lg font-medium transition-glow ${
                     isActive(link.path)
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-secondary"
+                      ? "bg-primary text-primary-foreground shadow-[0_0_25px_rgba(255,127,107,0.4)]"
+                      : "hover:bg-secondary hover:shadow-[0_0_20px_rgba(255,243,199,0.5)]"
                   }`}
                 >
                   {link.label}
