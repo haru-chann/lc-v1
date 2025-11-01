@@ -6,23 +6,42 @@ import Footer from "@/components/Footer";
 import QuoteBox from "@/components/QuoteBox";
 import heroImage from "@/assets/hero-image.jpg";
 import { useEffect, useState } from "react";
-
-const motivationalQuotes = [
-  { text: "Your mental health is a priority, not a luxury.", author: "Anonymous" },
-  { text: "Healing is not linear, and that's okay.", author: "Anonymous" },
-  { text: "You are stronger than you think.", author: "InnerGlow Community" },
-  { text: "It's okay to not be okay.", author: "Anonymous" },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [quotes, setQuotes] = useState<Array<{ text: string; author?: string }>>([]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentQuoteIndex((prev) => (prev + 1) % motivationalQuotes.length);
-    }, 5000);
-    return () => clearInterval(interval);
+    fetchQuotes();
   }, []);
+
+  useEffect(() => {
+    if (quotes.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentQuoteIndex((prev) => (prev + 1) % quotes.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [quotes.length]);
+
+  const fetchQuotes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("quotes")
+        .select("*")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setQuotes(data.map(q => ({ text: q.text, author: q.author || undefined })));
+      }
+    } catch (error) {
+      console.error("Error fetching quotes:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -118,19 +137,16 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Motivational Quote Rotator */}
-      <section className="py-16 bg-secondary/30">
+      {/* Motivational Quote Section */}
+      <section className="bg-secondary py-16">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-center mb-8">
-              <Sparkles className="text-primary" size={32} />
-            </div>
-            <div className="animate-fade-in" key={currentQuoteIndex}>
+          <div className="max-w-4xl mx-auto animate-fade-in">
+            {quotes.length > 0 && (
               <QuoteBox
-                text={motivationalQuotes[currentQuoteIndex].text}
-                author={motivationalQuotes[currentQuoteIndex].author}
+                text={quotes[currentQuoteIndex].text}
+                author={quotes[currentQuoteIndex].author}
               />
-            </div>
+            )}
           </div>
         </div>
       </section>

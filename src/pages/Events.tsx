@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 
 interface Event {
-  id: number;
+  id: string;
   name: string;
   date: string;
   time: string;
@@ -14,62 +14,14 @@ interface Event {
   location: string;
 }
 
-const events: Event[] = [
-  {
-    id: 1,
-    name: "Mindfulness & Meditation Circle",
-    date: "2025-11-15",
-    time: "6:00 PM - 7:30 PM",
-    description: "Join us for a calming evening of guided meditation and mindfulness practices. Perfect for beginners and experienced practitioners alike.",
-    location: "Online via Zoom",
-  },
-  {
-    id: 2,
-    name: "Mental Health Awareness Workshop",
-    date: "2025-11-20",
-    time: "3:00 PM - 5:00 PM",
-    description: "Learn about mental health, coping strategies, and how to support loved ones. Interactive workshop with mental health professionals.",
-    location: "Community Center",
-  },
-  {
-    id: 3,
-    name: "Peer Support Group Session",
-    date: "2025-11-22",
-    time: "7:00 PM - 8:30 PM",
-    description: "A safe space to share experiences, challenges, and victories with others who understand. Facilitated by trained volunteers.",
-    location: "Online via Zoom",
-  },
-  {
-    id: 4,
-    name: "Art Therapy & Creative Expression",
-    date: "2025-11-28",
-    time: "4:00 PM - 6:00 PM",
-    description: "Express yourself through art in a supportive environment. No artistic experience required - just bring your authentic self.",
-    location: "InnerGlow Studio",
-  },
-  {
-    id: 5,
-    name: "Stress Management Workshop",
-    date: "2025-12-05",
-    time: "5:30 PM - 7:00 PM",
-    description: "Learn practical techniques to manage stress, anxiety, and overwhelming emotions in your daily life.",
-    location: "Online via Zoom",
-  },
-  {
-    id: 6,
-    name: "Community Wellness Walk",
-    date: "2025-12-08",
-    time: "10:00 AM - 12:00 PM",
-    description: "Join us for a peaceful walk in nature. Connect with community members while enjoying the healing power of movement and fresh air.",
-    location: "City Park - Main Entrance",
-  },
-];
-
 const Events = () => {
   const [whatsappContact, setWhatsappContact] = useState<string>("1234567890");
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchWhatsAppContact();
+    fetchEvents();
   }, []);
 
   const fetchWhatsAppContact = async () => {
@@ -90,11 +42,45 @@ const Events = () => {
     }
   };
 
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("date", { ascending: true });
+
+      if (error) throw error;
+      
+      if (data) {
+        setEvents(data.map(event => ({
+          id: event.id,
+          name: event.name,
+          date: event.date,
+          time: event.time,
+          description: event.description,
+          location: event.location,
+        })));
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBookWhatsApp = (event: Event) => {
     const message = `Hi! I'd like to book the event: ${event.name} on ${event.date} at ${event.time}`;
     const whatsappUrl = `https://wa.me/${whatsappContact}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

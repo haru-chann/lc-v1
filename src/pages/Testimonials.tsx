@@ -1,62 +1,52 @@
-import { Play, Quote } from "lucide-react";
+import { Play } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Testimonial {
-  id: number;
+  id: string;
   name: string;
   role: string;
-  quote: string;
-  videoThumbnail: string;
+  video_url: string;
+  thumbnail_url: string;
 }
 
-const testimonials: Testimonial[] = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    role: "Community Member",
-    quote: "InnerGlow helped me find my voice and realize I'm not alone in my struggles. The support here is incredible.",
-    videoThumbnail: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=300&fit=crop",
-  },
-  {
-    id: 2,
-    name: "Michael Chen",
-    role: "Workshop Participant",
-    quote: "The mindfulness sessions changed my life. I've learned tools that help me manage anxiety every single day.",
-    videoThumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    role: "Support Group Member",
-    quote: "Finding this community was a turning point. The volunteers are compassionate and the space feels so safe.",
-    videoThumbnail: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=300&fit=crop",
-  },
-  {
-    id: 4,
-    name: "David Patel",
-    role: "Event Attendee",
-    quote: "I was skeptical at first, but the art therapy session helped me express emotions I didn't know I had.",
-    videoThumbnail: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=300&fit=crop",
-  },
-  {
-    id: 5,
-    name: "Lisa Thompson",
-    role: "Regular Participant",
-    quote: "The peer support groups gave me strength during my darkest times. Forever grateful to this community.",
-    videoThumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=300&fit=crop",
-  },
-  {
-    id: 6,
-    name: "James Wilson",
-    role: "Workshop Graduate",
-    quote: "InnerGlow taught me that healing isn't linear, and that's perfectly okay. This community saved my life.",
-    videoThumbnail: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop",
-  },
-];
-
 const Testimonials = () => {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+
+  const fetchTestimonials = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("testimonials")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      if (data) {
+        setTestimonials(data);
+      }
+    } catch (error) {
+      console.error("Error fetching testimonials:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -86,43 +76,38 @@ const Testimonials = () => {
                 {/* Video Thumbnail */}
                 <div className="relative h-56 overflow-hidden">
                   <img
-                    src={testimonial.videoThumbnail}
+                    src={testimonial.thumbnail_url}
                     alt={testimonial.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-smooth duration-500"
                   />
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-smooth">
-                    <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,127,107,0.8)] group-hover:scale-110 transition-glow">
+                    <a 
+                      href={testimonial.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(255,127,107,0.8)] group-hover:scale-110 transition-glow"
+                    >
                       <Play className="text-primary-foreground ml-1" size={28} />
-                    </div>
+                    </a>
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="p-6 space-y-4">
-                  <Quote className="text-primary/30" size={32} />
-                  
-                  <p className="text-muted-foreground italic leading-relaxed">
-                    "{testimonial.quote}"
-                  </p>
-                  
-                  <div className="pt-4 border-t border-border">
+                  <div className="pt-4">
                     <p className="font-bold text-lg">{testimonial.name}</p>
-                    <p className="text-sm text-primary">{testimonial.role}</p>
+                    <p className="text-muted-foreground text-sm">{testimonial.role}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Admin CTA */}
-          <div className="mt-16 text-center">
-            <div className="inline-flex items-center gap-4 p-6 bg-secondary/30 rounded-2xl">
-              <p className="text-muted-foreground">Want to share your story?</p>
-              <Button variant="outline">
-                Add Testimonial
-              </Button>
+          {testimonials.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No testimonials available yet.</p>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
