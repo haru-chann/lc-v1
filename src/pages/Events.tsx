@@ -12,6 +12,8 @@ interface Event {
   time: string;
   description: string;
   location: string;
+  is_booking_open: boolean;
+  slots_status: string | null;
 }
 
 const Events = () => {
@@ -59,6 +61,8 @@ const Events = () => {
           time: event.time,
           description: event.description,
           location: event.location,
+          is_booking_open: event.is_booking_open ?? true,
+          slots_status: event.slots_status,
         })));
       }
     } catch (error) {
@@ -141,12 +145,19 @@ const Events = () => {
                     {event.description}
                   </p>
                   
+                  {event.slots_status && (
+                    <div className="bg-secondary/50 border border-primary/30 rounded-lg p-3 text-center">
+                      <p className="text-primary font-semibold">{event.slots_status}</p>
+                    </div>
+                  )}
+                  
                   <Button 
                     onClick={() => handleBookWhatsApp(event)}
                     className="w-full shadow-soft"
+                    disabled={!event.is_booking_open}
                   >
                     <MessageCircle className="mr-2" size={18} />
-                    Book via WhatsApp
+                    {event.is_booking_open ? "Book via WhatsApp" : "Booking Closed"}
                   </Button>
                 </div>
               </div>

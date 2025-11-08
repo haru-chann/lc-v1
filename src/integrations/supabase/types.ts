@@ -51,8 +51,10 @@ export type Database = {
           date: string
           description: string
           id: string
+          is_booking_open: boolean | null
           location: string
           name: string
+          slots_status: string | null
           time: string
           updated_at: string | null
         }
@@ -62,8 +64,10 @@ export type Database = {
           date: string
           description: string
           id?: string
+          is_booking_open?: boolean | null
           location: string
           name: string
+          slots_status?: string | null
           time: string
           updated_at?: string | null
         }
@@ -73,8 +77,10 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          is_booking_open?: boolean | null
           location?: string
           name?: string
+          slots_status?: string | null
           time?: string
           updated_at?: string | null
         }

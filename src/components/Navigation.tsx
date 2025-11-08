@@ -73,9 +73,9 @@ const Navigation = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">IG</span>
+              <span className="text-primary-foreground font-bold text-lg">LC</span>
             </div>
-            <span className="font-heading font-bold text-xl">InnerGlow</span>
+            <span className="font-heading font-bold text-xl">ListeningClub</span>
           </Link>
 
           {/* Desktop Navigation */}

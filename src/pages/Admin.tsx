@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Lock, Calendar, MessageSquare, Quote, Save, Plus, Edit, Trash2 } from "lucide-react";
+import { Lock, Calendar, MessageSquare, Quote, Save, Plus, Edit, Trash2, HelpCircle, Users, Phone } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -16,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
+// Schemas
 const whatsappSchema = z.object({
   whatsapp_contact: z.string().min(1).max(100).trim(),
 });
@@ -26,13 +28,15 @@ const eventSchema = z.object({
   time: z.string().min(1).max(100).trim(),
   description: z.string().min(1).max(1000).trim(),
   location: z.string().min(1).max(200).trim(),
+  is_booking_open: z.boolean().default(true),
+  slots_status: z.string().max(200).trim().optional(),
 });
 
 const testimonialSchema = z.object({
   name: z.string().min(1).max(100).trim(),
   role: z.string().min(1).max(100).trim(),
   video_url: z.string().url().max(500).trim(),
-  thumbnail_url: z.string().url().max(500).trim(),
+  thumbnail_url: z.string().url().max(500).trim().optional(),
 });
 
 const quoteSchema = z.object({
@@ -40,10 +44,35 @@ const quoteSchema = z.object({
   author: z.string().max(100).trim().optional(),
 });
 
+const faqSchema = z.object({
+  question: z.string().min(1).max(500).trim(),
+  answer: z.string().min(1).max(2000).trim(),
+  display_order: z.number().int().min(0).default(0),
+});
+
+const volunteerSchema = z.object({
+  name: z.string().min(1).max(100).trim(),
+  role: z.string().min(1).max(100).trim(),
+  quote: z.string().min(1).max(500).trim(),
+  image_url: z.string().url().max(500).trim(),
+  display_order: z.number().int().min(0).default(0),
+});
+
+const contactSchema = z.object({
+  email: z.string().email().max(255).trim().optional(),
+  phone: z.string().max(50).trim().optional(),
+  address: z.string().max(500).trim().optional(),
+  instagram_url: z.string().url().max(500).trim().optional(),
+  linkedin_url: z.string().url().max(500).trim().optional(),
+});
+
 type WhatsAppFormValues = z.infer<typeof whatsappSchema>;
 type EventFormValues = z.infer<typeof eventSchema>;
 type TestimonialFormValues = z.infer<typeof testimonialSchema>;
 type QuoteFormValues = z.infer<typeof quoteSchema>;
+type FAQFormValues = z.infer<typeof faqSchema>;
+type VolunteerFormValues = z.infer<typeof volunteerSchema>;
+type ContactFormValues = z.infer<typeof contactSchema>;
 
 const Admin = () => {
   const { toast } = useToast();
@@ -51,6 +80,9 @@ const Admin = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
+  const [faqs, setFaqs] = useState<any[]>([]);
+  const [volunteers, setVolunteers] = useState<any[]>([]);
+  const [contactInfo, setContactInfo] = useState<any>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   
@@ -67,6 +99,8 @@ const Admin = () => {
       time: "",
       description: "",
       location: "",
+      is_booking_open: true,
+      slots_status: "",
     },
   });
 
@@ -88,11 +122,45 @@ const Admin = () => {
     },
   });
 
+  const faqForm = useForm<FAQFormValues>({
+    resolver: zodResolver(faqSchema),
+    defaultValues: {
+      question: "",
+      answer: "",
+      display_order: 0,
+    },
+  });
+
+  const volunteerForm = useForm<VolunteerFormValues>({
+    resolver: zodResolver(volunteerSchema),
+    defaultValues: {
+      name: "",
+      role: "",
+      quote: "",
+      image_url: "",
+      display_order: 0,
+    },
+  });
+
+  const contactForm = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      email: "",
+      phone: "",
+      address: "",
+      instagram_url: "",
+      linkedin_url: "",
+    },
+  });
+
   useEffect(() => {
     fetchWhatsAppContact();
     fetchEvents();
     fetchTestimonials();
     fetchQuotes();
+    fetchFAQs();
+    fetchVolunteers();
+    fetchContactInfo();
   }, []);
 
   const fetchWhatsAppContact = async () => {
@@ -119,6 +187,24 @@ const Admin = () => {
     if (data) setQuotes(data);
   };
 
+  const fetchFAQs = async () => {
+    const { data } = await supabase.from("faqs").select("*").order("display_order", { ascending: true });
+    if (data) setFaqs(data);
+  };
+
+  const fetchVolunteers = async () => {
+    const { data } = await supabase.from("volunteers").select("*").order("display_order", { ascending: true });
+    if (data) setVolunteers(data);
+  };
+
+  const fetchContactInfo = async () => {
+    const { data } = await supabase.from("contact_info").select("*").maybeSingle();
+    if (data) {
+      setContactInfo(data);
+      contactForm.reset(data);
+    }
+  };
+
   const onWhatsAppSubmit = async (values: WhatsAppFormValues) => {
     setIsLoading(true);
     try {
@@ -138,25 +224,29 @@ const Admin = () => {
   const onEventSubmit = async (values: EventFormValues) => {
     setIsLoading(true);
     try {
+      const eventData = {
+        name: values.name,
+        date: values.date,
+        time: values.time,
+        description: values.description,
+        location: values.location,
+        is_booking_open: values.is_booking_open,
+        slots_status: values.slots_status || null,
+      };
+      
       if (editingItem?.id) {
-        const { error } = await supabase.from("events").update(values as any).eq("id", editingItem.id);
+        const { error } = await supabase.from("events").update(eventData).eq("id", editingItem.id);
         if (error) throw error;
         toast({ title: "Success", description: "Event updated successfully" });
       } else {
-        const { error } = await supabase.from("events").insert([values as any]);
+        const { error } = await supabase.from("events").insert([eventData]);
         if (error) throw error;
         toast({ title: "Success", description: "Event created successfully" });
       }
       fetchEvents();
       setDialogOpen(false);
       setEditingItem(null);
-      eventForm.reset({
-        name: "",
-        date: "",
-        time: "",
-        description: "",
-        location: "",
-      });
+      eventForm.reset();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -179,12 +269,7 @@ const Admin = () => {
       fetchTestimonials();
       setDialogOpen(false);
       setEditingItem(null);
-      testimonialForm.reset({
-        name: "",
-        role: "",
-        video_url: "",
-        thumbnail_url: "",
-      });
+      testimonialForm.reset();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -207,10 +292,74 @@ const Admin = () => {
       fetchQuotes();
       setDialogOpen(false);
       setEditingItem(null);
-      quoteForm.reset({
-        text: "",
-        author: "",
+      quoteForm.reset();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onFAQSubmit = async (values: FAQFormValues) => {
+    setIsLoading(true);
+    try {
+      if (editingItem?.id) {
+        const { error } = await supabase.from("faqs").update(values as any).eq("id", editingItem.id);
+        if (error) throw error;
+        toast({ title: "Success", description: "FAQ updated successfully" });
+      } else {
+        const { error } = await supabase.from("faqs").insert([{ ...values, is_active: true } as any]);
+        if (error) throw error;
+        toast({ title: "Success", description: "FAQ created successfully" });
+      }
+      fetchFAQs();
+      setDialogOpen(false);
+      setEditingItem(null);
+      faqForm.reset();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onVolunteerSubmit = async (values: VolunteerFormValues) => {
+    setIsLoading(true);
+    try {
+      if (editingItem?.id) {
+        const { error } = await supabase.from("volunteers").update(values as any).eq("id", editingItem.id);
+        if (error) throw error;
+        toast({ title: "Success", description: "Volunteer updated successfully" });
+      } else {
+        const { error } = await supabase.from("volunteers").insert([{ ...values, is_active: true } as any]);
+        if (error) throw error;
+        toast({ title: "Success", description: "Volunteer created successfully" });
+      }
+      fetchVolunteers();
+      setDialogOpen(false);
+      setEditingItem(null);
+      volunteerForm.reset();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onContactSubmit = async (values: ContactFormValues) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.from("contact_info").upsert({
+        id: contactInfo?.id || undefined,
+        email: values.email || null,
+        phone: values.phone || null,
+        address: values.address || null,
+        instagram_url: values.instagram_url || null,
+        linkedin_url: values.linkedin_url || null,
       });
+      if (error) throw error;
+      toast({ title: "Success", description: "Contact information updated successfully" });
+      fetchContactInfo();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -251,6 +400,28 @@ const Admin = () => {
     }
   };
 
+  const deleteFAQ = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this FAQ?")) return;
+    const { error } = await supabase.from("faqs").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "FAQ deleted successfully" });
+      fetchFAQs();
+    }
+  };
+
+  const deleteVolunteer = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this volunteer?")) return;
+    const { error } = await supabase.from("volunteers").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Volunteer deleted successfully" });
+      fetchVolunteers();
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -262,7 +433,7 @@ const Admin = () => {
             Admin Dashboard
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in-up">
-            Manage events, testimonials, and motivational quotes for the InnerGlow community.
+            Manage all content for the ListeningClub community.
           </p>
         </div>
       </section>
@@ -278,7 +449,7 @@ const Admin = () => {
                   WhatsApp Configuration
                 </CardTitle>
                 <CardDescription>
-                  Set the WhatsApp phone number or link for event bookings
+                  Set the WhatsApp phone number for event bookings
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -291,10 +462,10 @@ const Admin = () => {
                         <FormItem>
                           <FormLabel>WhatsApp Contact</FormLabel>
                           <FormControl>
-                            <Input placeholder="1234567890 or wa.me/1234567890" {...field} />
+                            <Input placeholder="1234567890" {...field} />
                           </FormControl>
                           <FormDescription>
-                            Enter a phone number (e.g., 1234567890) or WhatsApp link
+                            Enter a phone number (e.g., 1234567890)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -311,10 +482,13 @@ const Admin = () => {
 
             {/* Management Tabs */}
             <Tabs defaultValue="events" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
                 <TabsTrigger value="quotes">Quotes</TabsTrigger>
+                <TabsTrigger value="faqs">FAQs</TabsTrigger>
+                <TabsTrigger value="volunteers">Volunteers</TabsTrigger>
+                <TabsTrigger value="contact">Contact</TabsTrigger>
               </TabsList>
 
               {/* Events Tab */}
@@ -326,7 +500,7 @@ const Admin = () => {
                       Add Event
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingItem?.id ? 'Edit' : 'Add'} Event</DialogTitle>
                       <DialogDescription>Fill in the event details below</DialogDescription>
@@ -370,6 +544,25 @@ const Admin = () => {
                             <FormMessage />
                           </FormItem>
                         )} />
+                        <FormField control={eventForm.control} name="is_booking_open" render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <FormControl>
+                              <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Booking Open</FormLabel>
+                              <FormDescription>Allow users to book this event</FormDescription>
+                            </div>
+                          </FormItem>
+                        )} />
+                        <FormField control={eventForm.control} name="slots_status" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Slots Status (optional)</FormLabel>
+                            <FormControl><Input placeholder="e.g., Slots Full, Limited Seats" {...field} /></FormControl>
+                            <FormDescription>Display a custom message about slot availability</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
                         <Button type="submit" disabled={isLoading}>
                           {isLoading ? "Saving..." : "Save Event"}
                         </Button>
@@ -383,14 +576,36 @@ const Admin = () => {
                     <Card key={event.id}>
                       <CardContent className="p-6">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1">
                             <h3 className="font-bold text-lg">{event.name}</h3>
                             <p className="text-sm text-muted-foreground">{event.date} • {event.time}</p>
                             <p className="text-sm text-muted-foreground">{event.location}</p>
                             <p className="mt-2">{event.description}</p>
+                            <div className="mt-2 flex gap-2">
+                              <span className={`text-xs px-2 py-1 rounded ${event.is_booking_open ? 'bg-green-500/20 text-green-700' : 'bg-red-500/20 text-red-700'}`}>
+                                {event.is_booking_open ? 'Booking Open' : 'Booking Closed'}
+                              </span>
+                              {event.slots_status && (
+                                <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary">
+                                  {event.slots_status}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => { setEditingItem({ ...event, type: 'event' }); eventForm.reset(event); setDialogOpen(true); }}>
+                            <Button size="sm" variant="outline" onClick={() => { 
+                              setEditingItem({ ...event, type: 'event' }); 
+                              eventForm.reset({
+                                name: event.name,
+                                date: event.date,
+                                time: event.time,
+                                description: event.description,
+                                location: event.location,
+                                is_booking_open: event.is_booking_open ?? true,
+                                slots_status: event.slots_status || "",
+                              }); 
+                              setDialogOpen(true); 
+                            }}>
                               <Edit size={16} />
                             </Button>
                             <Button size="sm" variant="destructive" onClick={() => deleteEvent(event.id)}>
@@ -443,7 +658,7 @@ const Admin = () => {
                         )} />
                         <FormField control={testimonialForm.control} name="thumbnail_url" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Thumbnail URL</FormLabel>
+                            <FormLabel>Thumbnail URL (optional)</FormLabel>
                             <FormControl><Input {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
@@ -540,6 +755,231 @@ const Admin = () => {
                     </Card>
                   ))}
                 </div>
+              </TabsContent>
+
+              {/* FAQs Tab */}
+              <TabsContent value="faqs" className="space-y-4">
+                <Dialog open={dialogOpen && editingItem?.type === 'faq'} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingItem(null); faqForm.reset(); } }}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => { setEditingItem({ type: 'faq' }); setDialogOpen(true); }} className="mb-4">
+                      <Plus className="mr-2" size={18} />
+                      Add FAQ
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>{editingItem?.id ? 'Edit' : 'Add'} FAQ</DialogTitle>
+                      <DialogDescription>Fill in the FAQ details below</DialogDescription>
+                    </DialogHeader>
+                    <Form {...faqForm}>
+                      <form onSubmit={faqForm.handleSubmit(onFAQSubmit)} className="space-y-4">
+                        <FormField control={faqForm.control} name="question" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Question</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={faqForm.control} name="answer" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Answer</FormLabel>
+                            <FormControl><Textarea rows={6} {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={faqForm.control} name="display_order" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Display Order</FormLabel>
+                            <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} /></FormControl>
+                            <FormDescription>Lower numbers appear first</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <Button type="submit" disabled={isLoading}>
+                          {isLoading ? "Saving..." : "Save FAQ"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+
+                <div className="grid gap-4">
+                  {faqs.map(faq => (
+                    <Card key={faq.id}>
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-lg">{faq.question}</h3>
+                            <p className="mt-2 text-muted-foreground">{faq.answer}</p>
+                            <p className="text-xs text-muted-foreground mt-2">Order: {faq.display_order}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => { 
+                              setEditingItem({ ...faq, type: 'faq' }); 
+                              faqForm.reset(faq); 
+                              setDialogOpen(true); 
+                            }}>
+                              <Edit size={16} />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteFAQ(faq.id)}>
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* Volunteers Tab */}
+              <TabsContent value="volunteers" className="space-y-4">
+                <Dialog open={dialogOpen && editingItem?.type === 'volunteer'} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingItem(null); volunteerForm.reset(); } }}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => { setEditingItem({ type: 'volunteer' }); setDialogOpen(true); }} className="mb-4">
+                      <Plus className="mr-2" size={18} />
+                      Add Volunteer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>{editingItem?.id ? 'Edit' : 'Add'} Volunteer</DialogTitle>
+                      <DialogDescription>Fill in the volunteer details below</DialogDescription>
+                    </DialogHeader>
+                    <Form {...volunteerForm}>
+                      <form onSubmit={volunteerForm.handleSubmit(onVolunteerSubmit)} className="space-y-4">
+                        <FormField control={volunteerForm.control} name="name" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Name</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={volunteerForm.control} name="role" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Role</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={volunteerForm.control} name="quote" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Quote</FormLabel>
+                            <FormControl><Textarea {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={volunteerForm.control} name="image_url" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Image URL</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={volunteerForm.control} name="display_order" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Display Order</FormLabel>
+                            <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} /></FormControl>
+                            <FormDescription>Lower numbers appear first</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <Button type="submit" disabled={isLoading}>
+                          {isLoading ? "Saving..." : "Save Volunteer"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+
+                <div className="grid gap-4">
+                  {volunteers.map(volunteer => (
+                    <Card key={volunteer.id}>
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-lg">{volunteer.name}</h3>
+                            <p className="text-sm text-muted-foreground">{volunteer.role}</p>
+                            <p className="mt-2 italic">"{volunteer.quote}"</p>
+                            <p className="text-xs text-muted-foreground mt-2">Order: {volunteer.display_order}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => { 
+                              setEditingItem({ ...volunteer, type: 'volunteer' }); 
+                              volunteerForm.reset(volunteer); 
+                              setDialogOpen(true); 
+                            }}>
+                              <Edit size={16} />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteVolunteer(volunteer.id)}>
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* Contact Tab */}
+              <TabsContent value="contact" className="space-y-4">
+                <Card className="shadow-soft border-border">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Phone className="text-primary" size={24} />
+                      Contact Information
+                    </CardTitle>
+                    <CardDescription>
+                      Update the contact details displayed on the website
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...contactForm}>
+                      <form onSubmit={contactForm.handleSubmit(onContactSubmit)} className="space-y-4">
+                        <FormField control={contactForm.control} name="email" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl><Input type="email" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={contactForm.control} name="phone" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={contactForm.control} name="address" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address</FormLabel>
+                            <FormControl><Textarea {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={contactForm.control} name="instagram_url" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Instagram URL</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={contactForm.control} name="linkedin_url" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>LinkedIn URL</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <Button type="submit" disabled={isLoading} className="shadow-soft">
+                          <Save className="mr-2" size={18} />
+                          {isLoading ? "Saving..." : "Save Contact Information"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </div>

@@ -10,9 +10,9 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">IG</span>
+                <span className="text-primary-foreground font-bold text-lg">LC</span>
               </div>
-              <span className="font-heading font-bold text-xl">InnerGlow</span>
+              <span className="font-heading font-bold text-xl">ListeningClub</span>
             </div>
             <p className="text-sm text-muted-foreground">
               A space to listen, heal, and grow together.
@@ -95,7 +95,7 @@ const Footer = () => {
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            © 2025 InnerGlow. All rights reserved.
+            © 2025 ListeningClub. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground flex items-center gap-1 mt-4 md:mt-0">
             Made with <Heart size={14} className="text-primary fill-primary" /> for mental wellness
