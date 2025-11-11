@@ -9,6 +9,8 @@ import Testimonials from "./pages/Testimonials";
 import Volunteers from "./pages/Volunteers";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
+import Updates from "./pages/Updates";
+import MemoryLane from "./pages/MemoryLane";
 import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/volunteers" element={<Volunteers />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/updates" element={<Updates />} />
+          <Route path="/memory-lane" element={<MemoryLane />} />
           <Route path="/auth" element={<Auth />} />
           <Route 
             path="/admin" 

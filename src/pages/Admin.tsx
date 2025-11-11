@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Calendar, MessageSquare, Quote, Save, Plus, Edit, Trash2, HelpCircle, Users, Phone } from "lucide-react";
+import { Lock, Calendar, MessageSquare, Quote, Save, Plus, Edit, Trash2, HelpCircle, Users, Phone, Bell, Image as ImageIcon, Upload } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,18 @@ const contactSchema = z.object({
   linkedin_url: z.string().url().max(500).trim().optional(),
 });
 
+const postSchema = z.object({
+  title: z.string().min(1).max(200).trim(),
+  content: z.string().min(1).max(2000).trim(),
+  type: z.enum(['news', 'notification', 'alert', 'event_cancellation']).default('news'),
+});
+
+const gallerySchema = z.object({
+  image_url: z.string().url().max(500).trim(),
+  caption: z.string().max(500).trim().optional(),
+  display_order: z.number().int().min(0).default(0),
+});
+
 type WhatsAppFormValues = z.infer<typeof whatsappSchema>;
 type EventFormValues = z.infer<typeof eventSchema>;
 type TestimonialFormValues = z.infer<typeof testimonialSchema>;
@@ -73,6 +85,8 @@ type QuoteFormValues = z.infer<typeof quoteSchema>;
 type FAQFormValues = z.infer<typeof faqSchema>;
 type VolunteerFormValues = z.infer<typeof volunteerSchema>;
 type ContactFormValues = z.infer<typeof contactSchema>;
+type PostFormValues = z.infer<typeof postSchema>;
+type GalleryFormValues = z.infer<typeof gallerySchema>;
 
 const Admin = () => {
   const { toast } = useToast();
@@ -83,8 +97,11 @@ const Admin = () => {
   const [faqs, setFaqs] = useState<any[]>([]);
   const [volunteers, setVolunteers] = useState<any[]>([]);
   const [contactInfo, setContactInfo] = useState<any>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const whatsappForm = useForm<WhatsAppFormValues>({
     resolver: zodResolver(whatsappSchema),
@@ -150,6 +167,24 @@ const Admin = () => {
       address: "",
       instagram_url: "",
       linkedin_url: "",
+    },
+  });
+
+  const postForm = useForm<PostFormValues>({
+    resolver: zodResolver(postSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      type: "news",
+    },
+  });
+
+  const galleryForm = useForm<GalleryFormValues>({
+    resolver: zodResolver(gallerySchema),
+    defaultValues: {
+      image_url: "",
+      caption: "",
+      display_order: 0,
     },
   });
 
@@ -422,6 +457,111 @@ const Admin = () => {
     }
   };
 
+  // Posts functions
+  const fetchPosts = async () => {
+    const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+    if (!error && data) setPosts(data);
+  };
+
+  const onPostSubmit = async (data: PostFormValues) => {
+    setIsLoading(true);
+    const { error } = editingItem?.id
+      ? await supabase.from("posts").update(data as any).eq("id", editingItem.id)
+      : await supabase.from("posts").insert([data as any]);
+
+    setIsLoading(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: `Post ${editingItem?.id ? "updated" : "created"} successfully` });
+      setDialogOpen(false);
+      setEditingItem(null);
+      postForm.reset();
+      fetchPosts();
+    }
+  };
+
+  const deletePost = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this post?")) return;
+    const { error } = await supabase.from("posts").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Post deleted successfully" });
+      fetchPosts();
+    }
+  };
+
+  // Gallery functions
+  const fetchGalleryImages = async () => {
+    const { data, error } = await supabase.from("gallery_images").select("*").order("display_order", { ascending: true });
+    if (!error && data) setGalleryImages(data);
+  };
+
+  const onGallerySubmit = async (data: GalleryFormValues) => {
+    setIsLoading(true);
+    
+    // Check limit of 25 images
+    if (!editingItem?.id && galleryImages.length >= 25) {
+      toast({ title: "Error", description: "Maximum of 25 images allowed", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
+
+    const { error } = editingItem?.id
+      ? await supabase.from("gallery_images").update(data as any).eq("id", editingItem.id)
+      : await supabase.from("gallery_images").insert([data as any]);
+
+    setIsLoading(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: `Image ${editingItem?.id ? "updated" : "uploaded"} successfully` });
+      setDialogOpen(false);
+      setEditingItem(null);
+      galleryForm.reset();
+      fetchGalleryImages();
+    }
+  };
+
+  const uploadImage = async (file: File) => {
+    setUploadingImage(true);
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const { data, error } = await supabase.storage
+      .from('memory-lane')
+      .upload(fileName, file);
+
+    setUploadingImage(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return null;
+    }
+    
+    const { data: { publicUrl } } = supabase.storage.from('memory-lane').getPublicUrl(fileName);
+    return publicUrl;
+  };
+
+  const deleteGalleryImage = async (id: string, imageUrl: string) => {
+    if (!confirm("Are you sure you want to delete this image?")) return;
+    
+    // Delete from database
+    const { error: dbError } = await supabase.from("gallery_images").delete().eq("id", id);
+    if (dbError) {
+      toast({ title: "Error", description: dbError.message, variant: "destructive" });
+      return;
+    }
+
+    // Delete from storage
+    const fileName = imageUrl.split('/').pop();
+    if (fileName) {
+      await supabase.storage.from('memory-lane').remove([fileName]);
+    }
+
+    toast({ title: "Success", description: "Image deleted successfully" });
+    fetchGalleryImages();
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -482,13 +622,15 @@ const Admin = () => {
 
             {/* Management Tabs */}
             <Tabs defaultValue="events" className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
+              <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
                 <TabsTrigger value="quotes">Quotes</TabsTrigger>
                 <TabsTrigger value="faqs">FAQs</TabsTrigger>
                 <TabsTrigger value="volunteers">Volunteers</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
+                <TabsTrigger value="posts">Updates</TabsTrigger>
+                <TabsTrigger value="gallery">Gallery</TabsTrigger>
               </TabsList>
 
               {/* Events Tab */}
@@ -978,6 +1120,194 @@ const Admin = () => {
                         </Button>
                       </form>
                     </Form>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Posts Tab */}
+              <TabsContent value="posts" className="space-y-4">
+                <Dialog open={dialogOpen && editingItem?.type === 'post'} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingItem(null); postForm.reset(); } }}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => { setEditingItem({ type: 'post' }); setDialogOpen(true); }} className="mb-4">
+                      <Plus className="mr-2" size={18} />
+                      Add Post
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{editingItem?.id ? 'Edit Post' : 'Add New Post'}</DialogTitle>
+                      <DialogDescription>Create updates, notifications, or alerts for users</DialogDescription>
+                    </DialogHeader>
+                    <Form {...postForm}>
+                      <form onSubmit={postForm.handleSubmit(onPostSubmit)} className="space-y-4">
+                        <FormField control={postForm.control} name="title" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Title</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={postForm.control} name="content" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Content</FormLabel>
+                            <FormControl><Textarea {...field} rows={8} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={postForm.control} name="type" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Type</FormLabel>
+                            <FormControl>
+                              <select {...field} className="w-full rounded-md border border-input bg-background px-3 py-2">
+                                <option value="news">News</option>
+                                <option value="notification">Notification</option>
+                                <option value="alert">Alert</option>
+                                <option value="event_cancellation">Event Cancellation</option>
+                              </select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <Button type="submit" disabled={isLoading}>
+                          {isLoading ? "Saving..." : editingItem?.id ? "Update Post" : "Create Post"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bell className="text-primary" size={24} />
+                      All Posts
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {posts.map((post) => (
+                        <div key={post.id} className="flex items-start justify-between border-b pb-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold">{post.title}</h3>
+                            <p className="text-sm text-muted-foreground mt-1">{post.content.substring(0, 100)}...</p>
+                            <p className="text-xs text-muted-foreground mt-2">Type: {post.type}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => {
+                              setEditingItem({ ...post, type: 'post' });
+                              postForm.reset(post);
+                              setDialogOpen(true);
+                            }}>
+                              <Edit size={16} />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => deletePost(post.id)}>
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      {posts.length === 0 && <p className="text-muted-foreground">No posts yet</p>}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Gallery Tab */}
+              <TabsContent value="gallery" className="space-y-4">
+                <Dialog open={dialogOpen && editingItem?.type === 'gallery'} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingItem(null); galleryForm.reset(); } }}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      onClick={() => { setEditingItem({ type: 'gallery' }); setDialogOpen(true); }} 
+                      className="mb-4"
+                      disabled={galleryImages.length >= 25}
+                    >
+                      <Plus className="mr-2" size={18} />
+                      Add Image ({galleryImages.length}/25)
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>{editingItem?.id ? 'Edit Gallery Image' : 'Add New Image'}</DialogTitle>
+                      <DialogDescription>Upload memories to the Memory Lane gallery (max 25 images)</DialogDescription>
+                    </DialogHeader>
+                    <Form {...galleryForm}>
+                      <form onSubmit={galleryForm.handleSubmit(onGallerySubmit)} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Upload Image</Label>
+                          <Input 
+                            type="file" 
+                            accept="image/*"
+                            disabled={uploadingImage}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const url = await uploadImage(file);
+                                if (url) {
+                                  galleryForm.setValue('image_url', url);
+                                }
+                              }
+                            }}
+                          />
+                          {uploadingImage && <p className="text-sm text-muted-foreground">Uploading...</p>}
+                        </div>
+                        <FormField control={galleryForm.control} name="image_url" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Image URL</FormLabel>
+                            <FormControl><Input {...field} placeholder="Auto-filled after upload" /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={galleryForm.control} name="caption" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Caption (Optional)</FormLabel>
+                            <FormControl><Input {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={galleryForm.control} name="display_order" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Display Order</FormLabel>
+                            <FormControl><Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <Button type="submit" disabled={isLoading || uploadingImage}>
+                          {isLoading ? "Saving..." : editingItem?.id ? "Update Image" : "Add Image"}
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ImageIcon className="text-primary" size={24} />
+                      Gallery Images ({galleryImages.length}/25)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {galleryImages.map((image) => (
+                        <div key={image.id} className="relative group">
+                          <img src={image.image_url} alt={image.caption || ''} className="w-full h-40 object-cover rounded-lg" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+                            <Button size="sm" variant="outline" onClick={() => {
+                              setEditingItem({ ...image, type: 'gallery' });
+                              galleryForm.reset(image);
+                              setDialogOpen(true);
+                            }}>
+                              <Edit size={16} />
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteGalleryImage(image.id, image.image_url)}>
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+                          {image.caption && <p className="text-xs mt-1 truncate">{image.caption}</p>}
+                        </div>
+                      ))}
+                      {galleryImages.length === 0 && <p className="text-muted-foreground col-span-full">No images yet</p>}
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
