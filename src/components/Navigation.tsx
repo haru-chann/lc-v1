@@ -93,7 +93,7 @@ const Navigation = () => {
                 {link.label}
               </Link>
             ))}
-            {isAdmin && (
+            {user && (
               <Link to="/admin">
                 <Button variant="outline" size="sm" className="ml-4">
                   Admin
@@ -156,7 +156,7 @@ const Navigation = () => {
                   {link.label}
                 </Link>
               ))}
-              {isAdmin && (
+              {user && (
                 <Link to="/admin" onClick={() => setIsOpen(false)}>
                   <Button variant="outline" className="w-full">
                     Admin

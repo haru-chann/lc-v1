@@ -119,7 +119,7 @@ const Auth = () => {
       }
 
       toast({
-        title: "Welcome to InnerGlow!",
+        title: "Welcome to ListeningClub!",
         description: "Your account has been created successfully",
       });
       navigate("/");

@@ -58,7 +58,7 @@ const Testimonials = () => {
             Community Stories
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in-up">
-            Real stories from real people. Hear how InnerGlow has impacted lives and created meaningful connections.
+            Real stories from real people. Hear how ListeningClub has impacted lives and created meaningful connections.
           </p>
         </div>
       </section>

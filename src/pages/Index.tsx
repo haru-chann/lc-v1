@@ -57,7 +57,7 @@ const Index = () => {
                 <span className="text-primary">grow</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
-                Join InnerGlow, a compassionate community dedicated to mental health
+                Join ListeningClub, a compassionate community dedicated to mental health
                 awareness and emotional wellbeing. You're not alone.
               </p>
               <div className="flex flex-wrap gap-4 pt-4">
@@ -77,7 +77,7 @@ const Index = () => {
             <div className="relative animate-scale-in">
               <img
                 src={heroImage}
-                alt="InnerGlow Community"
+                alt="ListeningClub Community"
                 className="rounded-3xl shadow-large w-full h-auto object-cover"
               />
               {/* Floating coral accents */}
@@ -96,7 +96,7 @@ const Index = () => {
               How We Support You
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              InnerGlow offers multiple ways to connect, heal, and find support
+              ListeningClub offers multiple ways to connect, heal, and find support
             </p>
           </div>
 
