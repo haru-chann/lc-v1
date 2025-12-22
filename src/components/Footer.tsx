@@ -1,17 +1,17 @@
 import { Link } from "react-router-dom";
 import { Instagram, Linkedin, Mail, Heart } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
-
 const Footer = () => {
-  return (
-    <footer className="bg-secondary/50 border-t border-border mt-20">
+  return <footer className="bg-secondary/50 border-t border-border mt-20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img src={logo} alt="ListeningClub Logo" className="w-12 h-12 rounded-full object-cover" />
-              <span className="font-heading font-bold text-xl">ListeningClub</span>
+              <span className="font-heading font-bold text-lg">Listening To
+MannKiBaat
+ </span>
             </div>
             <p className="text-sm text-muted-foreground">
               A space to listen, heal, and grow together.
@@ -66,26 +66,13 @@ const Footer = () => {
           <div>
             <h4 className="font-heading font-semibold mb-4">Connect With Us</h4>
             <div className="flex space-x-4">
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
-              >
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth">
                 <Instagram size={20} />
               </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
-              >
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth">
                 <Linkedin size={20} />
               </a>
-              <a
-                href="mailto:hello@listeningclub.com"
-                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
-              >
+              <a href="mailto:hello@listeningclub.com" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth">
                 <Mail size={20} />
               </a>
             </div>
@@ -101,8 +88,6 @@ const Footer = () => {
           </p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
