@@ -118,10 +118,10 @@ const HeroCarousel = () => {
 
   return (
     <section className="relative gradient-hero overflow-hidden">
-      <div className="container mx-auto px-4 py-20 md:py-32">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+      <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16 lg:py-20 xl:py-24">
+        <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 items-center">
           {/* Content */}
-          <div className="relative min-h-[320px]">
+          <div className="relative w-full min-h-[220px] sm:min-h-[280px] md:min-h-[320px] mt-6 md:mt-0">
             {slides.map((slide, index) => {
               const Icon = iconMap[slide.icon_type] || Heart;
               return (
@@ -131,31 +131,33 @@ const HeroCarousel = () => {
                     index === currentSlide
                       ? "opacity-100 translate-x-0"
                       : index < currentSlide
-                      ? "opacity-0 -translate-x-full"
-                      : "opacity-0 translate-x-full"
+                      ? "opacity-0 -translate-x-1/2"
+                      : "opacity-0 translate-x-1/2"
                   }`}
                 >
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                        <Icon className="text-primary" size={24} />
+                  <div className="space-y-2 sm:space-y-3 md:space-y-4 lg:space-y-6">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-primary/10 rounded-lg md:rounded-xl flex-shrink-0 flex items-center justify-center">
+                        <Icon className="text-primary w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                       </div>
-                      <span className="text-primary font-medium">{slide.subtitle}</span>
+                      <span className="text-xs sm:text-sm md:text-base text-primary font-medium">{slide.subtitle}</span>
                     </div>
-                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
+                    <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                       {slide.title}
                     </h1>
-                    <p className="text-lg md:text-xl text-muted-foreground whitespace-pre-line">
-                      {slide.description}
-                    </p>
-                    <div className="flex flex-wrap gap-4 pt-4">
-                      <Link to={slide.cta_link}>
-                        <Button size="lg" className="shadow-medium">
+                    <div className="max-h-[120px] sm:max-h-[140px] md:max-h-[180px] lg:max-h-[220px] overflow-y-auto pr-2">
+                      <p className="text-sm sm:text-base md:text-lg text-muted-foreground whitespace-pre-line">
+                        {slide.description}
+                      </p>
+                    </div>
+                    <div className="flex flex-col xs:flex-row flex-wrap gap-2 sm:gap-3 md:gap-4 pt-1 sm:pt-2 md:pt-4">
+                      <Link to={slide.cta_link} className="w-full xs:w-auto">
+                        <Button size="lg" className="w-full xs:w-auto shadow-medium text-sm sm:text-base">
                           {slide.cta_text}
                         </Button>
                       </Link>
-                      <Link to="/contact">
-                        <Button size="lg" variant="outline" className="shadow-soft">
+                      <Link to="/contact" className="w-full xs:w-auto">
+                        <Button size="lg" variant="outline" className="w-full xs:w-auto shadow-soft text-sm sm:text-base">
                           Contact Us
                         </Button>
                       </Link>
@@ -166,29 +168,28 @@ const HeroCarousel = () => {
             })}
           </div>
 
-          {/* Image - Changes per slide */}
-          <div className="relative animate-scale-in">
+          {/* Image */}
+          <div className="relative w-full h-[240px] xs:h-[280px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[500px] rounded-lg sm:rounded-xl md:rounded-2xl lg:rounded-3xl overflow-hidden shadow-md sm:shadow-lg md:shadow-xl">
             {slides.map((slide, index) => (
-              <img
+              <div
                 key={slide.id}
-                src={getSlideImage(slide, index)}
-                alt={slide.title}
-                className={`rounded-3xl shadow-large w-full h-auto object-cover transition-all duration-500 ${
-                  index === currentSlide
-                    ? "opacity-100 scale-100"
-                    : "opacity-0 scale-95 absolute inset-0"
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  index === currentSlide ? 'opacity-100' : 'opacity-0'
                 }`}
-              />
+              >
+                <img
+                  src={getSlideImage(slide, index)}
+                  alt={slide.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ))}
-            {/* Floating accents */}
-            <div className="absolute -top-8 -right-8 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-float animate-pulse-glow"></div>
-            <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-secondary/40 rounded-full blur-3xl animate-float" style={{ animationDelay: "1s" }}></div>
           </div>
         </div>
 
         {/* Navigation */}
         {slides.length > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-12">
+          <div className="flex items-center justify-center gap-4 mt-8 sm:mt-10 md:mt-12">
             <button
               onClick={() => handleManualNav('prev')}
               className="p-2 rounded-full bg-card border border-border shadow-soft hover:shadow-medium hover:scale-105 transition-smooth"
