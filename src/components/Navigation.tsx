@@ -90,8 +90,7 @@ const Navigation = () => {
           <Link to="/" className="flex items-center space-x-3">
             <img src={logo} alt="ListeningClub Logo" className="w-12 h-12 rounded-full object-cover" />
             <span className="font-heading font-bold text-base">Listening To
-MannKiBaat
-
+Mann Ki Baat
  </span>
           </Link>
 

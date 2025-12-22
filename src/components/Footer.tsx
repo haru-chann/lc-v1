@@ -10,7 +10,7 @@ const Footer = () => {
             <div className="flex items-center space-x-3">
               <img src={logo} alt="ListeningClub Logo" className="w-12 h-12 rounded-full object-cover" />
               <span className="font-heading font-bold text-lg">Listening To
-MannKiBaat
+Mann Ki Baat
  </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -81,7 +81,7 @@ MannKiBaat
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground">
-            © 2025 Listening To MannKiBaat. All rights reserved.
+            © 2025 Listening To Mann Ki Baat. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground flex items-center gap-1 mt-4 md:mt-0">
             Made with <Heart size={14} className="text-primary fill-primary" /> for mental wellness

@@ -57,7 +57,7 @@ const Index = () => {
               How We Support You
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Listening To MannKiBaat offers multiple ways to connect, heal, and find support
+              Listening To Mann Ki Baat offers multiple ways to connect, heal, and find support
             </p>
           </div>
 
