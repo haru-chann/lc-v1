@@ -1,24 +1,37 @@
-# Welcome to your Lovable project
+# ListeningClub - Mental Health Community
 
-## Project info
+## Project Overview
 
-**URL**: https://lovable.dev/projects/9f508904-8166-4051-a768-8356338a128c
+A supportive community platform for mental health and well-being, built with React and TypeScript.
 
-## How can I edit this code?
+## Getting Started
 
-There are several ways of editing your application.
+### Prerequisites
+- Node.js (v14 or later)
+- npm (v7 or later) or yarn
 
-**Use Lovable**
+### Installation
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/9f508904-8166-4051-a768-8356338a128c) and start prompting.
+## Development
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+This project uses:
+- React 18 with TypeScript
+- Vite for build tooling
+- TailwindCSS for styling
+- React Router for navigation
 
 Follow these steps:
 
@@ -60,14 +73,20 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/9f508904-8166-4051-a768-8356338a128c) and click on Share -> Publish.
+This project can be deployed to any static hosting service such as Vercel, Netlify, or GitHub Pages.
 
-## Can I connect a custom domain to my Lovable project?
+### Vercel Deployment
+1. Push your code to a GitHub repository
+2. Import the repository on Vercel
+3. Vercel will automatically detect the Vite project and configure the build settings
 
-Yes, you can!
+### Netlify Deployment
+1. Push your code to a Git repository
+2. Create a new site in Netlify and import the repository
+3. Set the build command to `npm run build` and publish directory to `dist`
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project is licensed under the MIT License.
