@@ -87,6 +87,4 @@ This project can be deployed to any static hosting service such as Vercel, Netli
 2. Create a new site in Netlify and import the repository
 3. Set the build command to `npm run build` and publish directory to `dist`
 
-## License
 
-This project is licensed under the MIT License.
