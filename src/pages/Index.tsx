@@ -7,44 +7,43 @@ import QuoteBox from "@/components/QuoteBox";
 import HeroCarousel from "@/components/HeroCarousel";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
 const Index = () => {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
-  const [quotes, setQuotes] = useState<Array<{ text: string; author?: string }>>([]);
-
+  const [quotes, setQuotes] = useState<Array<{
+    text: string;
+    author?: string;
+  }>>([]);
   useEffect(() => {
     fetchQuotes();
   }, []);
-
   useEffect(() => {
     if (quotes.length > 0) {
       const interval = setInterval(() => {
-        setCurrentQuoteIndex((prev) => (prev + 1) % quotes.length);
+        setCurrentQuoteIndex(prev => (prev + 1) % quotes.length);
       }, 5000);
       return () => clearInterval(interval);
     }
   }, [quotes.length]);
-
   const fetchQuotes = async () => {
     try {
-      const { data, error } = await supabase
-        .from("quotes")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from("quotes").select("*").eq("is_active", true).order("created_at", {
+        ascending: false
+      });
       if (error) throw error;
-      
       if (data && data.length > 0) {
-        setQuotes(data.map(q => ({ text: q.text, author: q.author || undefined })));
+        setQuotes(data.map(q => ({
+          text: q.text,
+          author: q.author || undefined
+        })));
       }
     } catch (error) {
       console.error("Error fetching quotes:", error);
     }
   };
-
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Navigation />
       
       {/* Hero Carousel */}
@@ -58,7 +57,7 @@ const Index = () => {
               How We Support You
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              ListeningClub offers multiple ways to connect, heal, and find support
+              Listening To MannKiBaat offers multiple ways to connect, heal, and find support
             </p>
           </div>
 
@@ -103,12 +102,7 @@ const Index = () => {
       <section className="bg-secondary py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto animate-fade-in">
-            {quotes.length > 0 && (
-              <QuoteBox
-                text={quotes[currentQuoteIndex].text}
-                author={quotes[currentQuoteIndex].author}
-              />
-            )}
+            {quotes.length > 0 && <QuoteBox text={quotes[currentQuoteIndex].text} author={quotes[currentQuoteIndex].author} />}
           </div>
         </div>
       </section>
@@ -141,8 +135,6 @@ const Index = () => {
       </section>
 
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
