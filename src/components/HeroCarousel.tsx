@@ -29,7 +29,7 @@ const defaultSlides: BannerSlide[] = [
   {
     id: "1",
     title: "Meet Our Founders",
-    subtitle: "The Heart Behind ListeningClub",
+    subtitle: "The Heart Behind Mann Ki Baat",
     description: "Geetika – Counsellor, Psychotherapist, and Parenting Coach, Geetika helps you feel heard, understood, and supported.\n\nSneha – NLP Practitioner, Life Coach, and Certified Zentangle Teacher, Sneha sparks creativity and empowers positive shifts in life.\n\nTogether, they run Listening to Mann ki Baat – a safe space where loneliness ends and real connection begins.",
     image_url: null,
     cta_text: "Meet the Team",
@@ -50,7 +50,7 @@ const defaultSlides: BannerSlide[] = [
     id: "3",
     title: "Our Mission",
     subtitle: "A Space to Listen, Heal, and Grow",
-    description: "ListeningClub is dedicated to creating safe, judgment-free spaces where everyone can find support on their mental health journey.",
+    description: "Mann Ki Baat is dedicated to creating safe, judgment-free spaces where everyone can find support on their mental health journey.",
     image_url: null,
     cta_text: "Learn More",
     cta_link: "/services",
