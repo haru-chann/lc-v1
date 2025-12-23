@@ -95,7 +95,7 @@ const AddToCalendar = ({
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Mann Ki Baat//Event//EN",
+      "PRODID:-//ListeningClub//Event//EN",
       "BEGIN:VEVENT",
       `DTSTART:${formatDateForICS(startDate)}`,
       `DTEND:${formatDateForICS(endDate)}`,

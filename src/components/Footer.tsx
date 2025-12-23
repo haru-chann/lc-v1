@@ -8,7 +8,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <img src={logo} alt="Mann Ki Baat Logo" className="w-12 h-12 rounded-full object-cover" />
+              <img src={logo} alt="ListeningClub Logo" className="w-12 h-12 rounded-full object-cover" />
               <span className="font-heading font-bold text-lg">Listening To
 Mann Ki Baat
  </span>

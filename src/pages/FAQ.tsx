@@ -60,8 +60,8 @@ const FAQ = () => {
   };
 
   const handleContactClick = () => {
-    const subject = encodeURIComponent("Inquiry about Mann Ki Baat");
-    const body = encodeURIComponent("Hi Mann Ki Baat, I'd like to know more about .....");
+    const subject = encodeURIComponent("Inquiry about ListeningClub");
+    const body = encodeURIComponent("Hey Listening Club, I'd like to know more about .....");
     const mailtoLink = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
     window.location.href = mailtoLink;
   };
@@ -86,7 +86,7 @@ const FAQ = () => {
             Frequently Asked Questions
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in-up">
-            Find answers to common questions about Mann Ki Baat, our services, and how we can support your mental wellness journey.
+            Find answers to common questions about ListeningClub, our services, and how we can support your mental wellness journey.
           </p>
         </div>
       </section>
