@@ -44,7 +44,7 @@ const MemoryLane = () => {
             Gallery
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            A collection of beautiful moments and memories from our ListeningClub community
+            A collection of beautiful moments and memories from our Mann Ki Baat community
           </p>
         </section>
 

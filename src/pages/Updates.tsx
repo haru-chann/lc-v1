@@ -77,7 +77,7 @@ const Updates = () => {
             Updates & News
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Stay informed with the latest news, notifications, and important announcements from ListeningClub
+            Stay informed with the latest news, notifications, and important announcements from Mann Ki Baat
           </p>
         </section>
 

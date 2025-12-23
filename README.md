@@ -1,4 +1,4 @@
-# ListeningClub - Mental Health Community
+# Mann Ki Baat - Mental Health Community
 
 ## Project Overview
 
@@ -86,5 +86,3 @@ This project can be deployed to any static hosting service such as Vercel, Netli
 1. Push your code to a Git repository
 2. Create a new site in Netlify and import the repository
 3. Set the build command to `npm run build` and publish directory to `dist`
-
-

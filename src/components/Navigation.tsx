@@ -88,7 +88,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <img src={logo} alt="ListeningClub Logo" className="w-12 h-12 rounded-full object-cover" />
+            <img src={logo} alt="Mann Ki Baat Logo" className="w-12 h-12 rounded-full object-cover" />
             <span className="font-heading font-bold text-base">Listening To
 Mann Ki Baat
  </span>

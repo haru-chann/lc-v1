@@ -937,7 +937,7 @@ const Admin = () => {
             Admin Dashboard
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in-up">
-            Manage all content for the ListeningClub community.
+            Manage all content for the Mann Ki Baat community.
           </p>
         </div>
       </section>
