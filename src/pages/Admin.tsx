@@ -56,7 +56,6 @@ const contactSchema = z.object({
   phone: z.string().max(50).trim().optional(),
   address: z.string().max(500).trim().optional(),
   instagram_url: z.string().max(500).trim().optional(),
-  linkedin_url: z.string().max(500).trim().optional(),
 });
 
 const gallerySchema = z.object({
@@ -72,7 +71,6 @@ const founderSchema = z.object({
   work: z.string().max(500).trim().optional(),
   motto: z.string().max(500).trim().optional(),
   image_url: z.string().max(500).trim().optional(),
-  linkedin_url: z.string().max(500).trim().optional(),
   instagram_url: z.string().max(500).trim().optional(),
   twitter_url: z.string().max(500).trim().optional(),
   display_order: z.number().int().min(0).default(0),
@@ -187,7 +185,6 @@ const Admin = () => {
       phone: "",
       address: "",
       instagram_url: "",
-      linkedin_url: "",
     },
   });
 
@@ -209,7 +206,6 @@ const Admin = () => {
       work: "",
       motto: "",
       image_url: "",
-      linkedin_url: "",
       instagram_url: "",
       twitter_url: "",
       display_order: 0,
@@ -521,7 +517,6 @@ const Admin = () => {
         phone: values.phone || null,
         address: values.address || null,
         instagram_url: values.instagram_url || null,
-        linkedin_url: values.linkedin_url || null,
       });
       if (error) throw error;
       toast({ title: "Success", description: "Contact information updated successfully" });
@@ -628,7 +623,6 @@ const Admin = () => {
         work: values.work || null,
         motto: values.motto || null,
         image_url: imageUrl,
-        linkedin_url: values.linkedin_url || null,
         instagram_url: values.instagram_url || null,
         twitter_url: values.twitter_url || null,
         display_order: values.display_order,
@@ -1420,13 +1414,6 @@ const Admin = () => {
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={contactForm.control} name="linkedin_url" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>LinkedIn URL</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
                         <Button type="submit" disabled={isLoading} className="shadow-soft">
                           <Save className="mr-2" size={18} />
                           {isLoading ? "Saving..." : "Save Contact Information"}
@@ -1629,13 +1616,6 @@ const Admin = () => {
                         <div className="border-t pt-4">
                           <h4 className="font-medium mb-3">Social Media Links</h4>
                           <div className="grid gap-4">
-                            <FormField control={founderForm.control} name="linkedin_url" render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>LinkedIn URL</FormLabel>
-                                <FormControl><Input placeholder="https://linkedin.com/in/..." {...field} /></FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )} />
                             <FormField control={founderForm.control} name="instagram_url" render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Instagram URL</FormLabel>

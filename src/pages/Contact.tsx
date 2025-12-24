@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Mail, Phone, Instagram, Linkedin, Send, Loader2 } from "lucide-react";
+import { Mail, Phone, Instagram, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,7 +30,6 @@ interface ContactInfo {
   email: string | null;
   phone: string | null;
   instagram_url: string | null;
-  linkedin_url: string | null;
 }
 
 const Contact = () => {
@@ -45,7 +44,6 @@ const Contact = () => {
     email: "hello@listeningclub.com",
     phone: "+1 (234) 567-890",
     instagram_url: "https://instagram.com",
-    linkedin_url: "https://linkedin.com",
   });
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -67,7 +65,6 @@ const Contact = () => {
           email: data.email || "hello@listeningclub.com",
           phone: data.phone || "+1 (234) 567-890",
           instagram_url: data.instagram_url || "https://instagram.com",
-          linkedin_url: data.linkedin_url || "https://linkedin.com",
         });
       }
     } catch (error) {
@@ -296,16 +293,6 @@ const Contact = () => {
                       className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-glow hover:shadow-[0_0_30px_rgba(255,127,107,0.6)] hover:scale-110"
                     >
                       <Instagram size={24} />
-                    </a>
-                  )}
-                  {contactInfo.linkedin_url && (
-                    <a
-                      href={contactInfo.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-glow hover:shadow-[0_0_30px_rgba(255,127,107,0.6)] hover:scale-110"
-                    >
-                      <Linkedin size={24} />
                     </a>
                   )}
                   {contactInfo.email && (

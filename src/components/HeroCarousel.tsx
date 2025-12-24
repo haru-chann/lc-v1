@@ -238,110 +238,106 @@ const HeroCarousel = () => {
   }
 
   return (
-    <section className="relative gradient-hero overflow-hidden">
-      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-24 lg:py-32">
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          {/* Content - Always visible, no absolute positioning on mobile */}
-          <div className="relative z-10 w-full order-2 lg:order-1">
-            <div className="space-y-4 sm:space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <CurrentIcon className="text-primary" size={20} />
-                </div>
-                <span className="text-primary font-medium text-sm sm:text-base">{currentSlideData?.subtitle}</span>
+    <section className="relative w-full h-[80vh] min-h-[600px] overflow-hidden bg-gradient-to-b from-background/90 to-background/70">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div className="w-full h-full">
+          <ImageErrorBoundary>
+            <img
+              src={getSlideImage(currentSlideData, currentSlide)}
+              alt={currentSlideData?.title}
+              className="w-full h-full object-cover object-center"
+              onError={() => {
+                console.error("Failed to load image:", getSlideImage(currentSlideData, currentSlide));
+                setImageError(true);
+              }}
+            />
+            {imageError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted/50 text-muted-foreground">
+                <AlertCircle className="w-12 h-12 text-destructive" />
               </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-                {currentSlideData?.title}
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl text-muted-foreground whitespace-pre-line line-clamp-6 sm:line-clamp-none">
-                {currentSlideData?.description}
-              </p>
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-2 sm:pt-4">
+            )}
+          </ImageErrorBoundary>
+          <div className="absolute inset-0 bg-black/30" />
+        </div>
+      </div>
+
+      {/* Content Overlay */}
+      <div className="container mx-auto px-4 h-full flex items-center relative z-10">
+        <div className="max-w-4xl">
+          <div className="space-y-4 sm:space-y-6 text-white">
+            <div className="flex items-center gap-3 bg-background/80 backdrop-blur-sm rounded-full w-fit px-4 py-1.5">
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                <CurrentIcon className="text-primary" size={16} />
+              </div>
+              <span className="text-primary font-medium text-sm sm:text-base">{currentSlideData?.subtitle}</span>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight text-white drop-shadow-lg">
+              {currentSlideData?.title}
+            </h1>
+            
+            <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-3xl leading-relaxed drop-shadow-sm">
+              {currentSlideData?.description}
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
+              <Button 
+                size="lg" 
+                className="shadow-medium w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground"
+                onClick={() => handleCtaClick(currentSlideData?.cta_link || "/")}
+              >
+                {currentSlideData?.cta_text}
+              </Button>
+              <Link to="/contact" className="w-full sm:w-auto">
                 <Button 
                   size="lg" 
-                  className="shadow-medium w-full sm:w-auto"
-                  onClick={() => handleCtaClick(currentSlideData?.cta_link || "/")}
+                  variant="outline" 
+                  className="w-full sm:w-auto bg-background/80 hover:bg-background/90 text-white border-white/20 hover:border-white/30"
                 >
-                  {currentSlideData?.cta_text}
+                  Contact Us
                 </Button>
-                <Link to="/contact" className="w-full sm:w-auto">
-                  <Button size="lg" variant="outline" className="shadow-soft w-full sm:w-auto">
-                    Contact Us
-                  </Button>
-                </Link>
-              </div>
+              </Link>
             </div>
-          </div>
-
-          {/* Image - Responsive container that adapts to any aspect ratio */}
-          <div className="relative w-full order-1 lg:order-2 animate-scale-in">
-            <div className="relative w-full max-h-[300px] sm:max-h-[400px] lg:max-h-none overflow-hidden rounded-2xl sm:rounded-3xl">
-              {/* Skeleton placeholder while image loads */}
-              <div className="w-full order-1 lg:order-2">
-                <div className="aspect-[4/3] lg:aspect-square bg-muted rounded-2xl sm:rounded-3xl overflow-hidden">
-                  <ImageErrorBoundary>
-                    <img
-                      src={getSlideImage(currentSlideData, currentSlide)}
-                      alt={currentSlideData?.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onError={() => {
-                        console.error("Failed to load image:", getSlideImage(currentSlideData, currentSlide));
-                        setImageError(true);
-                      }}
-                    />
-                    {imageError && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-muted/50 text-muted-foreground">
-                        <AlertCircle className="w-12 h-12 text-destructive" />
-                      </div>
-                    )}
-                  </ImageErrorBoundary>
-                </div>
-              </div>
-              {/* Floating accents - Hidden on mobile for cleaner look */}
-              <div className="hidden sm:block absolute -top-8 -right-8 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-float animate-pulse-glow"></div>
-            </div>
-            {/* Floating accents - Hidden on mobile for cleaner look */}
-            <div className="hidden sm:block absolute -top-8 -right-8 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-float animate-pulse-glow"></div>
-            <div className="hidden sm:block absolute -bottom-8 -left-8 w-32 h-32 bg-secondary/40 rounded-full blur-3xl animate-float" style={{ animationDelay: "1s" }}></div>
           </div>
         </div>
-
-        {/* Navigation */}
-        {slides.length > 1 && (
-          <div className="flex items-center justify-center gap-3 sm:gap-4 mt-8 sm:mt-12">
-            <button
-              onClick={() => handleManualNav('prev')}
-              className="p-2 rounded-full bg-card border border-border shadow-soft hover:shadow-medium hover:scale-105 transition-smooth"
-              aria-label="Previous slide"
-            >
-              <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
-            </button>
-
-            <div className="flex gap-2">
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToSlide(index)}
-                  className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
-                    index === currentSlide
-                      ? "bg-primary w-6 sm:w-8 shadow-[0_0_15px_rgba(255,127,107,0.5)]"
-                      : "bg-muted hover:bg-muted-foreground/50"
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={() => handleManualNav('next')}
-              className="p-2 rounded-full bg-card border border-border shadow-soft hover:shadow-medium hover:scale-105 transition-smooth"
-              aria-label="Next slide"
-            >
-              <ChevronRight size={20} className="sm:w-6 sm:h-6" />
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* Navigation */}
+      {slides.length > 1 && (
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-3 sm:gap-4 bg-background/80 backdrop-blur-sm p-2 rounded-full shadow-lg">
+          <button
+            onClick={() => handleManualNav('prev')}
+            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft size={20} className="w-5 h-5" />
+          </button>
+
+          <div className="flex gap-2">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
+                  index === currentSlide
+                    ? "bg-primary w-6 sm:w-8 shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                    : "bg-white/50 hover:bg-white/70"
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => handleManualNav('next')}
+            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            aria-label="Next slide"
+          >
+            <ChevronRight size={20} className="w-5 h-5" />
+          </button>
+        </div>
+      )}
     </section>
   );
 };
