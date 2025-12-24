@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Mail, Phone, Instagram, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
@@ -15,14 +14,16 @@ const contactFormSchema = z.object({
     .min(1, "Name is required")
     .max(100, "Name must be less than 100 characters")
     .trim(),
-  email: z.string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address")
-    .max(255, "Email must be less than 255 characters")
+  age: z.string()
+    .min(1, "Age is required")
+    .refine((val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) < 150, "Please enter a valid age"),
+  profession: z.string()
+    .min(1, "Profession is required")
+    .max(100, "Profession must be less than 100 characters")
     .trim(),
-  message: z.string()
-    .min(1, "Message is required")
-    .max(2000, "Message must be less than 2000 characters")
+  city: z.string()
+    .min(1, "City is required")
+    .max(100, "City must be less than 100 characters")
     .trim(),
 });
 
@@ -35,10 +36,11 @@ interface ContactInfo {
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
-    message: "",
+    age: "",
+    profession: "",
+    city: "",
   });
-  const [formErrors, setFormErrors] = useState<{ name?: string; email?: string; message?: string }>({});
+  const [formErrors, setFormErrors] = useState<{ name?: string; age?: string; profession?: string; city?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: "hello@listeningclub.com",
@@ -82,7 +84,7 @@ const Contact = () => {
     const result = contactFormSchema.safeParse(formData);
     
     if (!result.success) {
-      const errors: { name?: string; email?: string; message?: string } = {};
+      const errors: { name?: string; age?: string; profession?: string; city?: string } = {};
       result.error.errors.forEach((err) => {
         const field = err.path[0] as keyof typeof errors;
         errors[field] = err.message;
@@ -97,8 +99,9 @@ const Contact = () => {
       const { data, error } = await supabase.functions.invoke('submit-contact', {
         body: {
           name: result.data.name,
-          email: result.data.email,
-          message: result.data.message,
+          age: parseInt(result.data.age),
+          profession: result.data.profession,
+          city: result.data.city,
         },
       });
 
@@ -116,16 +119,16 @@ const Contact = () => {
       }
 
       toast({
-        title: "Message Sent!",
+        title: "Submitted Successfully!",
         description: "Thank you for reaching out. We'll get back to you soon.",
       });
 
-      setFormData({ name: "", email: "", message: "" });
+      setFormData({ name: "", age: "", profession: "", city: "" });
     } catch (error: any) {
       console.error("Form submission error:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to send message. Please try again later.",
+        description: error.message || "Failed to submit. Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -163,17 +166,17 @@ const Contact = () => {
           <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
             {/* Contact Form */}
             <div className="bg-card rounded-2xl p-8 shadow-medium border border-border animate-fade-in hover-glow neon-border">
-              <h2 className="text-3xl font-bold mb-6">Send us a Message</h2>
+              <h2 className="text-3xl font-bold mb-6">Tell Us About Yourself</h2>
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium mb-2">
-                    Your Name
+                    Name
                   </label>
                   <Input
                     id="name"
                     type="text"
-                    placeholder="John Doe"
+                    placeholder="Your full name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className={`bg-secondary/50 ${formErrors.name ? 'border-destructive' : ''}`}
@@ -186,56 +189,73 @@ const Contact = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-2">
-                    Email Address
+                  <label htmlFor="age" className="block text-sm font-medium mb-2">
+                    Age
                   </label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className={`bg-secondary/50 ${formErrors.email ? 'border-destructive' : ''}`}
+                    id="age"
+                    type="number"
+                    placeholder="Your age"
+                    value={formData.age}
+                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                    className={`bg-secondary/50 ${formErrors.age ? 'border-destructive' : ''}`}
                     disabled={isSubmitting}
-                    maxLength={255}
+                    min={1}
+                    max={150}
                   />
-                  {formErrors.email && (
-                    <p className="text-destructive text-sm mt-1">{formErrors.email}</p>
+                  {formErrors.age && (
+                    <p className="text-destructive text-sm mt-1">{formErrors.age}</p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium mb-2">
-                    Your Message
+                  <label htmlFor="profession" className="block text-sm font-medium mb-2">
+                    Profession
                   </label>
-                  <Textarea
-                    id="message"
-                    placeholder="Tell us how we can help you..."
-                    rows={6}
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className={`bg-secondary/50 resize-none ${formErrors.message ? 'border-destructive' : ''}`}
+                  <Input
+                    id="profession"
+                    type="text"
+                    placeholder="e.g., Software Engineer, Teacher, Student"
+                    value={formData.profession}
+                    onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                    className={`bg-secondary/50 ${formErrors.profession ? 'border-destructive' : ''}`}
                     disabled={isSubmitting}
-                    maxLength={2000}
+                    maxLength={100}
                   />
-                  {formErrors.message && (
-                    <p className="text-destructive text-sm mt-1">{formErrors.message}</p>
+                  {formErrors.profession && (
+                    <p className="text-destructive text-sm mt-1">{formErrors.profession}</p>
                   )}
-                  <p className="text-muted-foreground text-xs mt-1">
-                    {formData.message.length}/2000 characters
-                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium mb-2">
+                    City
+                  </label>
+                  <Input
+                    id="city"
+                    type="text"
+                    placeholder="Your city"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className={`bg-secondary/50 ${formErrors.city ? 'border-destructive' : ''}`}
+                    disabled={isSubmitting}
+                    maxLength={100}
+                  />
+                  {formErrors.city && (
+                    <p className="text-destructive text-sm mt-1">{formErrors.city}</p>
+                  )}
                 </div>
 
                 <Button type="submit" size="lg" className="w-full shadow-soft" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
+                      Submitting...
                     </>
                   ) : (
                     <>
                       <Send className="mr-2" size={18} />
-                      Send Message
+                      Submit
                     </>
                   )}
                 </Button>
