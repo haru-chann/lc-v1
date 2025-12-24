@@ -49,7 +49,6 @@ const Index = () => {
       {/* Hero Carousel */}
       <HeroCarousel />
 
-
       {/* Motivational Quote Section */}
       <section className="bg-secondary py-16">
         <div className="container mx-auto px-4">
