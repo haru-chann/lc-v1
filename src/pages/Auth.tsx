@@ -141,7 +141,7 @@ const Auth = () => {
           <div className="mx-auto mb-4">
             <Sparkles className="text-primary mx-auto" size={48} />
           </div>
-          <CardTitle className="text-3xl">Welcome to Mann Ki Baat</CardTitle>
+          <CardTitle className="text-3xl">Welcome to Listening to Mann Ki Baat</CardTitle>
           <CardDescription>Admin Sign In - A space to listen, heal, and grow</CardDescription>
         </CardHeader>
         <CardContent>
