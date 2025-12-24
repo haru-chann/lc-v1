@@ -1,39 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Users, Calendar, Heart, Sparkles, Star, Shield, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, Users, Calendar, Heart, Sparkles, Star, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-image.jpg";
-import { cn } from "@/lib/utils";
-
-// Error Boundary Component for Image Loading
-class ImageErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Image loading error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex flex-col items-center justify-center w-full h-full bg-muted/50 text-muted-foreground p-4">
-          <AlertCircle className="w-12 h-12 mb-2 text-destructive" />
-          <p className="text-center">Couldn't load this image</p>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 interface BannerSlide {
   id: string;
@@ -58,34 +28,34 @@ const iconMap: { [key: string]: React.ElementType } = {
 const defaultSlides: BannerSlide[] = [
   {
     id: "1",
-    title: 'Listen to Your Heart',
-    subtitle: 'Welcome to Our Community',
-    description: 'Join us in creating a safe space for open conversations and mental well-being.',
+    title: "Meet Our Founders",
+    subtitle: "The Heart Behind ListeningClub",
+    description: "Geetika – Counsellor, Psychotherapist, and Parenting Coach, Geetika helps you feel heard, understood, and supported.\n\nSneha – NLP Practitioner, Life Coach, and Certified Zentangle Teacher, Sneha sparks creativity and empowers positive shifts in life.\n\nTogether, they run Listening to Mann ki Baat – a safe space where loneliness ends and real connection begins.",
     image_url: null,
-    cta_text: 'Join Now',
-    cta_link: '/register',
-    icon_type: 'heart'
+    cta_text: "Meet the Team",
+    cta_link: "/founders",
+    icon_type: "users",
   },
   {
-    id: '2',
-    title: 'Heal Together',
-    subtitle: 'Support & Understanding',
-    description: 'Find comfort in shared experiences and professional guidance on your journey to wellness.',
+    id: "2",
+    title: "Upcoming Events",
+    subtitle: "Join Our Community Sessions",
+    description: "Participate in workshops, support groups, and wellness sessions designed to nurture your mental wellbeing.",
     image_url: null,
-    cta_text: 'Learn More',
-    cta_link: '/about',
-    icon_type: 'users'
+    cta_text: "View Events",
+    cta_link: "/events",
+    icon_type: "calendar",
   },
   {
-    id: '3',
-    title: 'Start Your Journey',
-    subtitle: 'Take the First Step',
-    description: 'Begin your path to better mental health with our supportive community and resources.',
+    id: "3",
+    title: "Our Mission",
+    subtitle: "A Space to Listen, Heal, and Grow",
+    description: "ListeningClub is dedicated to creating safe, judgment-free spaces where everyone can find support on their mental health journey.",
     image_url: null,
-    cta_text: 'Get Started',
-    cta_link: '/services',
-    icon_type: 'star'
-  }
+    cta_text: "Learn More",
+    cta_link: "/services",
+    icon_type: "heart",
+  },
 ];
 
 const HeroCarousel = () => {
@@ -94,18 +64,7 @@ const HeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
-  const autoPlayTimeoutRef = useRef<NodeJS.Timeout>();
-  const isMounted = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-      if (autoPlayTimeoutRef.current) {
-        clearTimeout(autoPlayTimeoutRef.current);
-      }
-    };
-  }, []);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const handleCtaClick = (ctaLink: string) => {
     if (ctaLink.includes('#')) {
@@ -171,20 +130,8 @@ const HeroCarousel = () => {
   useEffect(() => {
     if (!isAutoPlaying || slides.length <= 1) return;
     
-    const play = () => {
-      if (isMounted.current) {
-        nextSlide();
-        autoPlayTimeoutRef.current = setTimeout(play, 5000);
-      }
-    };
-    
-    autoPlayTimeoutRef.current = setTimeout(play, 5000);
-    
-    return () => {
-      if (autoPlayTimeoutRef.current) {
-        clearTimeout(autoPlayTimeoutRef.current);
-      }
-    };
+    const interval = setInterval(nextSlide, 5000);
+    return () => clearInterval(interval);
   }, [isAutoPlaying, nextSlide, slides.length]);
 
   const handleManualNav = (direction: 'prev' | 'next') => {
@@ -194,103 +141,145 @@ const HeroCarousel = () => {
     setTimeout(() => setIsAutoPlaying(true), 10000);
   };
 
+  // Reset image loaded state when slide changes
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [currentSlide]);
+
   const getSlideImage = (slide: BannerSlide, index: number) => {
     return slide.image_url || heroImage;
   };
 
-  const handleImageError = () => {
-    setImageError(true);
-  };
+  // Get current slide for rendering
+  const currentSlideData = slides[currentSlide];
+  const CurrentIcon = iconMap[currentSlideData?.icon_type] || Heart;
 
-  // Current slide data
-  const currentSlideData = slides[currentSlide] || slides[0];
+  // Show skeleton during initial load
+  if (isLoading) {
+    return (
+      <section className="relative gradient-hero overflow-hidden">
+        <div className="container mx-auto px-4 py-12 sm:py-16 md:py-24 lg:py-32">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="w-full order-2 lg:order-1 space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-xl animate-pulse" />
+                <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+              </div>
+              <div className="h-12 sm:h-16 w-3/4 bg-muted rounded animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                <div className="h-4 w-5/6 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-4/6 bg-muted rounded animate-pulse" />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <div className="h-10 w-32 bg-muted rounded animate-pulse" />
+                <div className="h-10 w-32 bg-muted rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="w-full order-1 lg:order-2">
+              <div className="aspect-[4/3] lg:aspect-square bg-muted rounded-2xl sm:rounded-3xl animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <div className="relative w-full overflow-hidden">
-      {/* Slides */}
-      <div className="relative h-[90vh] min-h-[600px] w-full">
-        {slides.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={cn(
-              'absolute inset-0 transition-opacity duration-1000',
-              index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            )}
-          >
-            {/* Dark overlay for better text contrast */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/40 z-10"></div>
-            
-            {/* Background image */}
-            <img
-              src={getSlideImage(slide, index)}
-              alt={slide.title}
-              className="w-full h-full object-cover"
-              onError={() => setImageError(true)}
-            />
-            
-            {/* Content */}
-            <div className="absolute inset-0 z-20 flex items-center justify-center text-center px-4 sm:px-6">
-              <div className="max-w-4xl mx-auto text-white space-y-6 px-4 sm:px-6">
-                {/* Subtitle */}
-                {slide.subtitle && (
-                  <span className="inline-block text-lg sm:text-xl font-medium text-primary mb-2">
-                    {slide.subtitle}
-                  </span>
-                )}
-                
-                {/* Main Title */}
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight">
-                  {slide.title}
-                </h1>
-                
-                {/* Description */}
-                <p className="text-lg sm:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
-                  {slide.description}
-                </p>
-                
-                {/* Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-                  <Button 
-                    size="lg" 
-                    className="px-8 py-6 text-base sm:text-lg font-medium bg-primary hover:bg-primary/90 transition-all duration-300 transform hover:scale-105"
-                    onClick={() => handleCtaClick(slide.cta_link)}
-                  >
-                    {slide.cta_text}
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    size="lg"
-                    className="px-8 py-6 text-base sm:text-lg font-medium border-2 border-white/30 text-white hover:bg-white/10 hover:border-white/50 transition-all duration-300 transform hover:scale-105"
-                  >
-                    Learn More
-                  </Button>
+    <section className="relative gradient-hero overflow-hidden">
+      <div className="container mx-auto px-4 py-12 sm:py-16 md:py-24 lg:py-32">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          {/* Content - Always visible, no absolute positioning on mobile */}
+          <div className="relative z-10 w-full order-2 lg:order-1">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <CurrentIcon className="text-primary" size={20} />
                 </div>
+                <span className="text-primary font-medium text-sm sm:text-base">{currentSlideData?.subtitle}</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+                {currentSlideData?.title}
+              </h1>
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground whitespace-pre-line line-clamp-6 sm:line-clamp-none">
+                {currentSlideData?.description}
+              </p>
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-2 sm:pt-4">
+                <Button 
+                  size="lg" 
+                  className="shadow-medium w-full sm:w-auto"
+                  onClick={() => handleCtaClick(currentSlideData?.cta_link || "/")}
+                >
+                  {currentSlideData?.cta_text}
+                </Button>
+                <Link to="/contact" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="shadow-soft w-full sm:w-auto">
+                    Contact Us
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Navigation Arrows - Only show on larger screens */}
-      {slides.length > 1 && (
-        <>
-          <button
-            onClick={() => handleManualNav('prev')}
-            className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all duration-300 hover:scale-110"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft size={28} />
-          </button>
-          <button
-            onClick={() => handleManualNav('next')}
-            className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-black/40 text-white hover:bg-black/60 transition-all duration-300 hover:scale-110"
-            aria-label="Next slide"
-          >
-            <ChevronRight size={28} />
-          </button>
-        </>
-      )}
-    </div>
+          {/* Image - Responsive container that adapts to any aspect ratio */}
+          <div className="relative w-full order-1 lg:order-2 animate-scale-in">
+            <div className="relative w-full max-h-[300px] sm:max-h-[400px] lg:max-h-none overflow-hidden rounded-2xl sm:rounded-3xl">
+              {/* Skeleton placeholder while image loads */}
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-muted animate-pulse rounded-2xl sm:rounded-3xl" />
+              )}
+              <img
+                src={getSlideImage(currentSlideData, currentSlide)}
+                alt={currentSlideData?.title}
+                className={`w-full h-auto object-cover rounded-2xl sm:rounded-3xl shadow-large transition-opacity duration-300 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                onLoad={() => setImageLoaded(true)}
+              />
+            </div>
+            {/* Floating accents - Hidden on mobile for cleaner look */}
+            <div className="hidden sm:block absolute -top-8 -right-8 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-float animate-pulse-glow"></div>
+            <div className="hidden sm:block absolute -bottom-8 -left-8 w-32 h-32 bg-secondary/40 rounded-full blur-3xl animate-float" style={{ animationDelay: "1s" }}></div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        {slides.length > 1 && (
+          <div className="flex items-center justify-center gap-3 sm:gap-4 mt-8 sm:mt-12">
+            <button
+              onClick={() => handleManualNav('prev')}
+              className="p-2 rounded-full bg-card border border-border shadow-soft hover:shadow-medium hover:scale-105 transition-smooth"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={20} className="sm:w-6 sm:h-6" />
+            </button>
+
+            <div className="flex gap-2">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
+                    index === currentSlide
+                      ? "bg-primary w-6 sm:w-8 shadow-[0_0_15px_rgba(255,127,107,0.5)]"
+                      : "bg-muted hover:bg-muted-foreground/50"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={() => handleManualNav('next')}
+              className="p-2 rounded-full bg-card border border-border shadow-soft hover:shadow-medium hover:scale-105 transition-smooth"
+              aria-label="Next slide"
+            >
+              <ChevronRight size={20} className="sm:w-6 sm:h-6" />
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
   );
 };
 
