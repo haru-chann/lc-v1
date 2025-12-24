@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Users, Calendar, Heart, Sparkles, Star, Shield, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-image.jpg";
-import { OptimizedImage } from "./OptimizedImage";
 import { cn } from "@/lib/utils";
 
 // Error Boundary Component for Image Loading
@@ -203,12 +202,6 @@ const HeroCarousel = () => {
     setImageError(true);
   };
 
-  const handleImageLoad = () => {
-    if (isMounted.current) {
-      setImageError(false);
-    }
-  };
-
   // Get current slide for rendering
   const currentSlideData = slides[currentSlide];
   const CurrentIcon = iconMap[currentSlideData?.icon_type] || Heart;
@@ -287,20 +280,14 @@ const HeroCarousel = () => {
               <div className="w-full order-1 lg:order-2">
                 <div className="aspect-[4/3] lg:aspect-square bg-muted rounded-2xl sm:rounded-3xl overflow-hidden">
                   <ImageErrorBoundary>
-                    <OptimizedImage
+                    <img
                       src={getSlideImage(currentSlideData, currentSlide)}
                       alt={currentSlideData?.title}
-                      className={cn(
-                        "w-full h-full object-cover transition-opacity duration-500",
-                        imageError ? "opacity-0" : "opacity-100"
-                      )}
-                      width={1200}
-                      height={900}
-                      sizes="(max-width: 1024px) 100vw, 50vw"
-                      quality={80}
-                      onLoad={handleImageLoad}
-                      onError={handleImageError}
-                      priority={currentSlide === 0}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      onError={() => {
+                        console.error("Failed to load image:", getSlideImage(currentSlideData, currentSlide));
+                        setImageError(true);
+                      }}
                     />
                     {imageError && (
                       <div className="absolute inset-0 flex items-center justify-center bg-muted/50 text-muted-foreground">

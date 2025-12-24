@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { OptimizedImage } from "@/components/OptimizedImage";
-import { GalleryLightbox } from "@/components/GalleryLightbox";
 
 interface GalleryImage {
   id: string;
@@ -15,24 +13,28 @@ interface GalleryImage {
 const MemoryLane = () => {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
 
   useEffect(() => {
     fetchImages();
   }, []);
 
   const fetchImages = async () => {
-    const { data, error } = await supabase
-      .from("gallery_images")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("uploaded_at", { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from("gallery_images")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true })
+        .order("uploaded_at", { ascending: false });
 
-    if (!error && data) {
-      setImages(data);
+      if (!error && data) {
+        setImages(data);
+      }
+    } catch (error) {
+      console.error("Error fetching gallery images:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -63,16 +65,12 @@ const MemoryLane = () => {
               <div
                 key={image.id}
                 className="group relative overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all cursor-pointer aspect-square"
-                onClick={() => setSelectedImageIndex(images.findIndex(img => img.id === image.id))}
               >
-                <OptimizedImage
+                <img
                   src={image.image_url}
                   alt={image.caption || "Memory"}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  width={400}
-                  height={400}
-                  quality={80}
+                  loading="lazy"
                 />
                 {image.caption && (
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -86,20 +84,6 @@ const MemoryLane = () => {
       </main>
 
       <Footer />
-
-      <GalleryLightbox
-        isOpen={selectedImageIndex >= 0}
-        onClose={() => setSelectedImageIndex(-1)}
-        images={images.map(img => ({
-          src: img.image_url,
-          alt: img.caption || "Memory",
-          caption: img.caption || undefined
-        }))}
-        initialIndex={selectedImageIndex}
-        onIndexChange={setSelectedImageIndex}
-        showThumbnails={images.length > 1}
-        showNavigation={images.length > 1}
-      />
     </div>
   );
 };
