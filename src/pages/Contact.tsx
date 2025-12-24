@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Mail, MapPin, Phone, Instagram, Linkedin, Send, Loader2 } from "lucide-react";
+import { Mail, Phone, Instagram, Linkedin, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +29,6 @@ const contactFormSchema = z.object({
 interface ContactInfo {
   email: string | null;
   phone: string | null;
-  address: string | null;
   instagram_url: string | null;
   linkedin_url: string | null;
 }
@@ -45,7 +44,6 @@ const Contact = () => {
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     email: "hello@listeningclub.com",
     phone: "+1 (234) 567-890",
-    address: "123 Wellness Street\nMental Health District\nCity, State 12345",
     instagram_url: "https://instagram.com",
     linkedin_url: "https://linkedin.com",
   });
@@ -68,7 +66,6 @@ const Contact = () => {
         setContactInfo({
           email: data.email || "hello@listeningclub.com",
           phone: data.phone || "+1 (234) 567-890",
-          address: data.address || "123 Wellness Street\nMental Health District\nCity, State 12345",
           instagram_url: data.instagram_url || "https://instagram.com",
           linkedin_url: data.linkedin_url || "https://linkedin.com",
         });
@@ -278,20 +275,6 @@ const Contact = () => {
                         <a href={`tel:${contactInfo.phone}`} className="text-muted-foreground hover:text-primary transition-smooth">
                           {contactInfo.phone}
                         </a>
-                      </div>
-                    </div>
-                  )}
-
-                  {contactInfo.address && (
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <MapPin className="text-primary" size={24} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold mb-1">Location</h3>
-                        <p className="text-muted-foreground whitespace-pre-line">
-                          {contactInfo.address}
-                        </p>
                       </div>
                     </div>
                   )}

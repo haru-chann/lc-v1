@@ -8,7 +8,6 @@ import Founders from "./pages/Founders";
 import Events from "./pages/Events";
 import Services from "./pages/Services";
 import Testimonials from "./pages/Testimonials";
-import Volunteers from "./pages/Volunteers";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import Updates from "./pages/Updates";
@@ -32,7 +31,6 @@ const App = () => (
           <Route path="/events" element={<Events />} />
           <Route path="/services" element={<Services />} />
           <Route path="/testimonials" element={<Testimonials />} />
-          <Route path="/volunteers" element={<Volunteers />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/updates" element={<Updates />} />

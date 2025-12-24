@@ -1,9 +1,40 @@
-import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Users, Calendar, Heart, Sparkles, Star, Shield } from "lucide-react";
+import { ChevronLeft, ChevronRight, Users, Calendar, Heart, Sparkles, Star, Shield, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-image.jpg";
+import { OptimizedImage } from "./OptimizedImage";
+import { cn } from "@/lib/utils";
+
+// Error Boundary Component for Image Loading
+class ImageErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Image loading error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center w-full h-full bg-muted/50 text-muted-foreground p-4">
+          <AlertCircle className="w-12 h-12 mb-2 text-destructive" />
+          <p className="text-center">Couldn't load this image</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 interface BannerSlide {
   id: string;
@@ -29,7 +60,7 @@ const defaultSlides: BannerSlide[] = [
   {
     id: "1",
     title: "Meet Our Founders",
-    subtitle: "The Heart Behind Mann Ki Baat",
+    subtitle: "The Heart Behind ListeningClub",
     description: "Geetika – Counsellor, Psychotherapist, and Parenting Coach, Geetika helps you feel heard, understood, and supported.\n\nSneha – NLP Practitioner, Life Coach, and Certified Zentangle Teacher, Sneha sparks creativity and empowers positive shifts in life.\n\nTogether, they run Listening to Mann ki Baat – a safe space where loneliness ends and real connection begins.",
     image_url: null,
     cta_text: "Meet the Team",
@@ -50,7 +81,7 @@ const defaultSlides: BannerSlide[] = [
     id: "3",
     title: "Our Mission",
     subtitle: "A Space to Listen, Heal, and Grow",
-    description: "Mann Ki Baat is dedicated to creating safe, judgment-free spaces where everyone can find support on their mental health journey.",
+    description: "ListeningClub is dedicated to creating safe, judgment-free spaces where everyone can find support on their mental health journey.",
     image_url: null,
     cta_text: "Learn More",
     cta_link: "/services",
@@ -59,9 +90,47 @@ const defaultSlides: BannerSlide[] = [
 ];
 
 const HeroCarousel = () => {
+  const navigate = useNavigate();
   const [slides, setSlides] = useState<BannerSlide[]>(defaultSlides);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const autoPlayTimeoutRef = useRef<NodeJS.Timeout>();
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+      if (autoPlayTimeoutRef.current) {
+        clearTimeout(autoPlayTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleCtaClick = (ctaLink: string) => {
+    if (ctaLink.includes('#')) {
+      const [path, hash] = ctaLink.split('#');
+      if (path === '' || path === '/') {
+        // Same page scroll
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // Navigate to page then scroll
+        navigate(path);
+        setTimeout(() => {
+          const element = document.getElementById(hash);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
+      }
+    } else {
+      navigate(ctaLink);
+    }
+  };
 
   useEffect(() => {
     fetchSlides();
@@ -81,6 +150,8 @@ const HeroCarousel = () => {
       }
     } catch (error) {
       console.error("Error fetching banner slides:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,8 +172,20 @@ const HeroCarousel = () => {
   useEffect(() => {
     if (!isAutoPlaying || slides.length <= 1) return;
     
-    const interval = setInterval(nextSlide, 5000);
-    return () => clearInterval(interval);
+    const play = () => {
+      if (isMounted.current) {
+        nextSlide();
+        autoPlayTimeoutRef.current = setTimeout(play, 5000);
+      }
+    };
+    
+    autoPlayTimeoutRef.current = setTimeout(play, 5000);
+    
+    return () => {
+      if (autoPlayTimeoutRef.current) {
+        clearTimeout(autoPlayTimeoutRef.current);
+      }
+    };
   }, [isAutoPlaying, nextSlide, slides.length]);
 
   const handleManualNav = (direction: 'prev' | 'next') => {
@@ -116,9 +199,50 @@ const HeroCarousel = () => {
     return slide.image_url || heroImage;
   };
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    if (isMounted.current) {
+      setImageError(false);
+    }
+  };
+
   // Get current slide for rendering
   const currentSlideData = slides[currentSlide];
   const CurrentIcon = iconMap[currentSlideData?.icon_type] || Heart;
+
+  // Show skeleton during initial load
+  if (isLoading) {
+    return (
+      <section className="relative gradient-hero overflow-hidden">
+        <div className="container mx-auto px-4 py-12 sm:py-16 md:py-24 lg:py-32">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="w-full order-2 lg:order-1 space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-muted rounded-xl animate-pulse" />
+                <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+              </div>
+              <div className="h-12 sm:h-16 w-3/4 bg-muted rounded animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                <div className="h-4 w-5/6 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-4/6 bg-muted rounded animate-pulse" />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <div className="h-10 w-32 bg-muted rounded animate-pulse" />
+                <div className="h-10 w-32 bg-muted rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="w-full order-1 lg:order-2">
+              <div className="aspect-[4/3] lg:aspect-square bg-muted rounded-2xl sm:rounded-3xl animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative gradient-hero overflow-hidden">
@@ -140,11 +264,13 @@ const HeroCarousel = () => {
                 {currentSlideData?.description}
               </p>
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 pt-2 sm:pt-4">
-                <Link to={currentSlideData?.cta_link || "/"} className="w-full sm:w-auto">
-                  <Button size="lg" className="shadow-medium w-full sm:w-auto">
-                    {currentSlideData?.cta_text}
-                  </Button>
-                </Link>
+                <Button 
+                  size="lg" 
+                  className="shadow-medium w-full sm:w-auto"
+                  onClick={() => handleCtaClick(currentSlideData?.cta_link || "/")}
+                >
+                  {currentSlideData?.cta_text}
+                </Button>
                 <Link to="/contact" className="w-full sm:w-auto">
                   <Button size="lg" variant="outline" className="shadow-soft w-full sm:w-auto">
                     Contact Us
@@ -157,11 +283,35 @@ const HeroCarousel = () => {
           {/* Image - Responsive container that adapts to any aspect ratio */}
           <div className="relative w-full order-1 lg:order-2 animate-scale-in">
             <div className="relative w-full max-h-[300px] sm:max-h-[400px] lg:max-h-none overflow-hidden rounded-2xl sm:rounded-3xl">
-              <img
-                src={getSlideImage(currentSlideData, currentSlide)}
-                alt={currentSlideData?.title}
-                className="w-full h-auto object-cover rounded-2xl sm:rounded-3xl shadow-large transition-all duration-500"
-              />
+              {/* Skeleton placeholder while image loads */}
+              <div className="w-full order-1 lg:order-2">
+                <div className="aspect-[4/3] lg:aspect-square bg-muted rounded-2xl sm:rounded-3xl overflow-hidden">
+                  <ImageErrorBoundary>
+                    <OptimizedImage
+                      src={getSlideImage(currentSlideData, currentSlide)}
+                      alt={currentSlideData?.title}
+                      className={cn(
+                        "w-full h-full object-cover transition-opacity duration-500",
+                        imageError ? "opacity-0" : "opacity-100"
+                      )}
+                      width={1200}
+                      height={900}
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      quality={80}
+                      onLoad={handleImageLoad}
+                      onError={handleImageError}
+                      priority={currentSlide === 0}
+                    />
+                    {imageError && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-muted/50 text-muted-foreground">
+                        <AlertCircle className="w-12 h-12 text-destructive" />
+                      </div>
+                    )}
+                  </ImageErrorBoundary>
+                </div>
+              </div>
+              {/* Floating accents - Hidden on mobile for cleaner look */}
+              <div className="hidden sm:block absolute -top-8 -right-8 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-float animate-pulse-glow"></div>
             </div>
             {/* Floating accents - Hidden on mobile for cleaner look */}
             <div className="hidden sm:block absolute -top-8 -right-8 w-24 h-24 bg-primary/20 rounded-full blur-2xl animate-float animate-pulse-glow"></div>

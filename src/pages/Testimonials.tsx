@@ -55,10 +55,10 @@ const Testimonials = () => {
       <section className="gradient-hero py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">
-            Community Stories
+            Testimonials
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in-up">
-            Real stories from real people. Hear how Mann Ki Baat has impacted lives and created meaningful connections.
+            Real stories from real people. Hear how Listening To Mann Ki Baat has impacted lives and created meaningful connections.
           </p>
         </div>
       </section>

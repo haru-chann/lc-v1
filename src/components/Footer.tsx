@@ -32,11 +32,6 @@ Mann Ki Baat
                   Events
                 </Link>
               </li>
-              <li>
-                <Link to="/volunteers" className="text-sm text-muted-foreground hover:text-primary transition-smooth">
-                  Volunteers
-                </Link>
-              </li>
             </ul>
           </div>
 
