@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
 import { Instagram, Mail, Heart } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
+import { useContactInfo } from "@/hooks/useContactInfo";
+
 const Footer = () => {
+  const { contactInfo, loading } = useContactInfo();
+  
+  if (loading) {
+    return null; // or a loading spinner
+  }
   return <footer className="bg-secondary/50 border-t border-border mt-20">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -14,7 +21,7 @@ Mann Ki Baat
  </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              A space to listen, heal, and grow together.
+              A safe space where loneliness ends and human connection begins.
             </p>
           </div>
 
@@ -61,12 +68,24 @@ Mann Ki Baat
           <div>
             <h4 className="font-heading font-semibold mb-4">Connect With Us</h4>
             <div className="flex space-x-4">
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth">
-                <Instagram size={20} />
-              </a>
-              <a href="mailto:hello@listeningclub.com" className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth">
-                <Mail size={20} />
-              </a>
+              {contactInfo.instagram_url && (
+                <a 
+                  href={contactInfo.instagram_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
+                >
+                  <Instagram size={20} />
+                </a>
+              )}
+              {contactInfo.email && (
+                <a 
+                  href={`mailto:${contactInfo.email}`} 
+                  className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-smooth"
+                >
+                  <Mail size={20} />
+                </a>
+              )}
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Mail, Phone, Instagram, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 // Form validation schema
 const contactFormSchema = z.object({
@@ -42,39 +43,16 @@ const Contact = () => {
   });
   const [formErrors, setFormErrors] = useState<{ name?: string; age?: string; profession?: string; city?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    email: "hello@listeningclub.com",
-    phone: "+1 (234) 567-890",
-    instagram_url: "https://instagram.com",
-  });
-  const [loading, setLoading] = useState(true);
+  const { contactInfo, loading } = useContactInfo();
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchContactInfo();
-  }, []);
-
-  const fetchContactInfo = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("contact_info")
-        .select("*")
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) {
-        setContactInfo({
-          email: data.email || "hello@listeningclub.com",
-          phone: data.phone || "+1 (234) 567-890",
-          instagram_url: data.instagram_url || "https://instagram.com",
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching contact info:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,14 +113,6 @@ const Contact = () => {
       setIsSubmitting(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col">

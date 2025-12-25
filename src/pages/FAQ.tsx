@@ -86,7 +86,7 @@ const FAQ = () => {
             Frequently Asked Questions
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in-up">
-            Find answers to common questions about Mann Ki Baat, our services, and how we can support your mental wellness journey.
+            Find answers to common questions about Listening to Mann Ki Baat, our services, and how we can support your mental wellness journey.
           </p>
         </div>
       </section>
