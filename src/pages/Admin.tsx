@@ -578,16 +578,30 @@ const Admin = () => {
   const onContactSubmit = async (values: ContactFormValues) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.from("contact_info").upsert({
-        id: contactInfo?.id || undefined,
-        email: values.email || null,
-        phone: values.phone || null,
-        address: values.address || null,
-        instagram_url: values.instagram_url || null,
-        linkedin_url: values.linkedin_url || null,
-      });
+      const { data, error } = await supabase
+        .from("contact_info")
+        .upsert(
+          { 
+            id: contactInfo?.id || 1, 
+            ...values,
+            linkedin_url: values.linkedin_url || null,
+            instagram_url: values.instagram_url || null,
+            email: values.email || null,
+            phone: values.phone || null,
+            address: values.address || null
+          },
+          { onConflict: "id" } 
+        )
+        .select()
+        .single();
+
       if (error) throw error;
-      toast({ title: "Success", description: "Contact information updated successfully" });
+      
+      setContactInfo(data);
+      toast({ 
+        title: "Success", 
+        description: "Contact information updated successfully" 
+      });
       fetchContactInfo();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
