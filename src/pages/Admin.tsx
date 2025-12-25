@@ -54,9 +54,7 @@ const faqSchema = z.object({
 const contactSchema = z.object({
   email: z.string().email().max(255).trim().optional().or(z.literal('')),
   phone: z.string().max(50).trim().optional(),
-  address: z.string().max(500).trim().optional(),
   instagram_url: z.string().max(500).trim().optional(),
-  linkedin_url: z.string().max(500).trim().optional(),
 });
 
 const gallerySchema = z.object({
@@ -188,9 +186,7 @@ const Admin = () => {
     defaultValues: {
       email: "",
       phone: "",
-      address: "",
       instagram_url: "",
-      linkedin_url: "",
     },
   });
 
@@ -290,10 +286,71 @@ const Admin = () => {
   };
 
   const fetchContactInfo = async () => {
-    const { data } = await supabase.from("contact_info").select("*").maybeSingle();
-    if (data) {
-      setContactInfo(data);
-      contactForm.reset(data);
+    try {
+      console.log('Fetching contact info...');
+      
+      // Fetch the contact info data
+      const { data, error } = await supabase
+        .from("contact_info")
+        .select("*")
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching contact info:', error);
+        // If table doesn't exist, create it
+        if (error.message.includes('relation "contact_info" does not exist')) {
+          console.log('Contact info table does not exist, creating...');
+          await createContactInfoTable();
+          return; // The table creation will trigger a refetch
+        }
+        throw error;
+      }
+      
+      console.log('Fetched contact info:', data);
+      
+      if (data) {
+        setContactInfo(data);
+        // Ensure all fields are present in the form
+        contactForm.reset({
+          email: data.email || '',
+          phone: data.phone || '',
+          instagram_url: data.instagram_url || ''
+        });
+      } else {
+        console.log('No contact info found, initializing with default values');
+        // Initialize with empty values if no data exists
+        const defaultData = {
+          email: '',
+          phone: '',
+          instagram_url: '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // Insert default record
+        const { error: insertError } = await supabase
+          .from('contact_info')
+          .insert([defaultData]);
+          
+        if (insertError) {
+          console.error('Error creating default contact info:', insertError);
+          throw insertError;
+        }
+        
+        // Reset form with default values
+        contactForm.reset({
+          email: '',
+          phone: '',
+          instagram_url: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error in fetchContactInfo:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load contact information',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -575,42 +632,175 @@ const Admin = () => {
     }
   };
 
+  const createContactInfoTable = async () => {
+    try {
+      console.log('Initializing contact info...');
+      
+      // Insert a default record (table should already exist or be created via migrations)
+      const defaultData = {
+        email: '',
+        phone: '',
+        instagram_url: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      const { error: insertError } = await supabase
+        .from('contact_info')
+        .insert([defaultData]);
+        
+      if (insertError) {
+        console.error('Error inserting default contact info:', insertError);
+        throw insertError;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in createContactInfoTable:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to initialize contact information',
+        variant: 'destructive'
+      });
+      return false;
+    }
+  };
+
   const onContactSubmit = async (values: ContactFormValues) => {
     setIsLoading(true);
+    console.log('Submitting contact form with values:', values);
+    
     try {
-      const { data, error } = await supabase
-        .from("contact_info")
-        .upsert(
-          { 
-            id: contactInfo?.id || 1, 
-            ...values,
-            linkedin_url: values.linkedin_url || null,
-            instagram_url: values.instagram_url || null,
-            email: values.email || null,
-            phone: values.phone || null,
-            address: values.address || null
-          },
-          { onConflict: "id" } 
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
+      // Prepare the data to be saved (without ID)
+      const contactData = {
+        email: values.email?.trim() || null,
+        phone: values.phone?.trim() || null,
+        instagram_url: values.instagram_url?.trim() || null,
+        updated_at: new Date().toISOString()
+      };
       
-      setContactInfo(data);
-      toast({ 
-        title: "Success", 
-        description: "Contact information updated successfully" 
-      });
-      fetchContactInfo();
+      console.log('Prepared contact data for save:', contactData);
+      
+      // Check if the table exists by trying to fetch any record
+      const { data: existingData, error: fetchError } = await supabase
+        .from("contact_info")
+        .select("*")
+        .limit(1)
+        .maybeSingle();
+      
+      // If table doesn't exist, create it
+      if (fetchError?.message?.includes('does not exist')) {
+        console.log('Contact info table does not exist, creating...');
+        const created = await createContactInfoTable();
+        if (!created) {
+          throw new Error('Failed to create contact info table');
+        }
+        // After creating table, try to insert the first record
+        const { data: newData, error: insertError } = await supabase
+          .from("contact_info")
+          .insert([contactData])
+          .select()
+          .single();
+          
+        if (insertError) {
+          console.error('Error inserting contact info:', insertError);
+          throw new Error(`Failed to save contact information: ${insertError.message}`);
+        }
+        
+        console.log('Successfully saved contact data:', newData);
+        setContactInfo(newData);
+        
+        toast({
+          title: "Success",
+          description: "Contact information updated successfully"
+        });
+        
+        contactForm.reset({
+          email: newData.email || '',
+          phone: newData.phone || '',
+          instagram_url: newData.instagram_url || ''
+        });
+      } else if (fetchError) {
+        console.error('Error checking for existing contact info:', fetchError);
+        throw fetchError;
+      } else {
+        // Table exists and we have existing data or it's empty
+        console.log('Existing contact data:', existingData);
+        
+        if (existingData) {
+          // Update existing record
+          const { data: updatedData, error: updateError } = await supabase
+            .from("contact_info")
+            .update(contactData)
+            .eq("id", existingData.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error("Supabase update error:", updateError);
+            throw new Error(`Failed to update contact information: ${updateError.message}`);
+          }
+          
+          console.log('Successfully updated contact data:', updatedData);
+          setContactInfo(updatedData);
+          
+          toast({
+            title: "Success",
+            description: "Contact information updated successfully"
+          });
+          
+          contactForm.reset({
+            email: updatedData.email || '',
+            phone: updatedData.phone || '',
+            instagram_url: updatedData.instagram_url || ''
+          });
+        } else {
+          // No existing data, insert new record
+          const { data: newData, error: insertError } = await supabase
+            .from("contact_info")
+            .insert([contactData])
+            .select()
+            .single();
+            
+          if (insertError) {
+            console.error('Error inserting contact info:', insertError);
+            throw new Error(`Failed to save contact information: ${insertError.message}`);
+          }
+          
+          console.log('Successfully saved contact data:', newData);
+          setContactInfo(newData);
+          
+          toast({
+            title: "Success",
+            description: "Contact information updated successfully"
+          });
+          
+          contactForm.reset({
+            email: newData.email || '',
+            phone: newData.phone || '',
+            instagram_url: newData.instagram_url || ''
+          });
+        }
+      }
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      console.error('Error saving contact information:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save contact information",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const uploadImage = async (file: File) => {
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({ title: "Error", description: "Image file must be less than 5MB", variant: "destructive" });
+      return null;
+    }
+
     setUploadingImage(true);
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
