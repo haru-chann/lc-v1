@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, Calendar, MessageSquare, Quote, Save, Plus, Edit, Trash2, HelpCircle, Phone, Image as ImageIcon, Upload, Video, Heart, Layers, Users, Briefcase, Download, FileText, CalendarIcon } from "lucide-react";
+import { Lock, Calendar, MessageSquare, Save, Plus, Edit, Trash2, HelpCircle, Phone, Image as ImageIcon, Upload, Video, Heart, Layers, Users, Briefcase, Download, FileText, CalendarIcon } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,6 @@ const testimonialSchema = z.object({
   role: z.string().min(1).max(100).trim(),
   video_url: z.string().max(500).trim().optional(),
   thumbnail_url: z.string().max(500).trim().optional(),
-});
-
-const quoteSchema = z.object({
-  text: z.string().min(1).max(500).trim(),
-  author: z.string().max(100).trim().optional(),
 });
 
 const faqSchema = z.object({
@@ -99,7 +94,6 @@ const bannerSlideSchema = z.object({
 type WhatsAppFormValues = z.infer<typeof whatsappSchema>;
 type EventFormValues = z.infer<typeof eventSchema>;
 type TestimonialFormValues = z.infer<typeof testimonialSchema>;
-type QuoteFormValues = z.infer<typeof quoteSchema>;
 type FAQFormValues = z.infer<typeof faqSchema>;
 type ContactFormValues = z.infer<typeof contactSchema>;
 type GalleryFormValues = z.infer<typeof gallerySchema>;
@@ -112,7 +106,6 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
-  const [quotes, setQuotes] = useState<any[]>([]);
   const [faqs, setFaqs] = useState<any[]>([]);
   const [contactInfo, setContactInfo] = useState<any>(null);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
@@ -134,7 +127,7 @@ const Admin = () => {
   const [selectedBannerImageFile, setSelectedBannerImageFile] = useState<File | null>(null);
   const [exportStartDate, setExportStartDate] = useState<string>("");
   const [exportEndDate, setExportEndDate] = useState<string>("");
-  
+
   const whatsappForm = useForm<WhatsAppFormValues>({
     resolver: zodResolver(whatsappSchema),
     defaultValues: { whatsapp_contact: "" },
@@ -162,14 +155,6 @@ const Admin = () => {
       role: "",
       video_url: "",
       thumbnail_url: "",
-    },
-  });
-
-  const quoteForm = useForm<QuoteFormValues>({
-    resolver: zodResolver(quoteSchema),
-    defaultValues: {
-      text: "",
-      author: "",
     },
   });
 
@@ -245,7 +230,6 @@ const Admin = () => {
     fetchWhatsAppContact();
     fetchEvents();
     fetchTestimonials();
-    fetchQuotes();
     fetchFAQs();
     fetchContactInfo();
     fetchGalleryImages();
@@ -273,11 +257,6 @@ const Admin = () => {
   const fetchTestimonials = async () => {
     const { data } = await supabase.from("testimonials").select("*").order("created_at", { ascending: false });
     if (data) setTestimonials(data);
-  };
-
-  const fetchQuotes = async () => {
-    const { data } = await supabase.from("quotes").select("*").order("created_at", { ascending: false });
-    if (data) setQuotes(data);
   };
 
   const fetchFAQs = async () => {
@@ -520,29 +499,6 @@ const Admin = () => {
       setEditingItem(null);
       setSelectedVideoFile(null);
       testimonialForm.reset();
-    } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onQuoteSubmit = async (values: QuoteFormValues) => {
-    setIsLoading(true);
-    try {
-      if (editingItem?.id) {
-        const { error } = await supabase.from("quotes").update(values as any).eq("id", editingItem.id);
-        if (error) throw error;
-        toast({ title: "Success", description: "Quote updated successfully" });
-      } else {
-        const { error } = await supabase.from("quotes").insert([{ ...values, is_active: true } as any]);
-        if (error) throw error;
-        toast({ title: "Success", description: "Quote created successfully" });
-      }
-      fetchQuotes();
-      setDialogOpen(false);
-      setEditingItem(null);
-      quoteForm.reset();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
@@ -883,17 +839,6 @@ const Admin = () => {
     }
   };
 
-  const deleteQuote = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this quote?")) return;
-    const { error } = await supabase.from("quotes").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Quote deleted successfully" });
-      fetchQuotes();
-    }
-  };
-
   const deleteFAQ = async (id: string) => {
     if (!confirm("Are you sure you want to delete this FAQ?")) return;
     const { error } = await supabase.from("faqs").delete().eq("id", id);
@@ -1044,10 +989,9 @@ const Admin = () => {
 
             {/* Management Tabs */}
             <Tabs defaultValue="events" className="w-full">
-              <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10">
+              <TabsList className="grid w-full grid-cols-5 lg:grid-cols-9">
                 <TabsTrigger value="events">Events</TabsTrigger>
                 <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
-                <TabsTrigger value="quotes">Quotes</TabsTrigger>
                 <TabsTrigger value="faqs">FAQs</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
                 <TabsTrigger value="gallery">Gallery</TabsTrigger>
@@ -1301,68 +1245,6 @@ const Admin = () => {
                               <Edit size={16} />
                             </Button>
                             <Button size="sm" variant="destructive" onClick={() => deleteTestimonial(testimonial.id, testimonial.video_url)}>
-                              <Trash2 size={16} />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-
-              {/* Quotes Tab */}
-              <TabsContent value="quotes" className="space-y-4">
-                <Dialog open={dialogOpen && editingItem?.type === 'quote'} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingItem(null); quoteForm.reset(); } }}>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => { setEditingItem({ type: 'quote' }); setDialogOpen(true); }} className="mb-4">
-                      <Plus className="mr-2" size={18} />
-                      Add Quote
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{editingItem?.id ? 'Edit' : 'Add'} Quote</DialogTitle>
-                      <DialogDescription>Fill in the quote details below</DialogDescription>
-                    </DialogHeader>
-                    <Form {...quoteForm}>
-                      <form onSubmit={quoteForm.handleSubmit(onQuoteSubmit)} className="space-y-4">
-                        <FormField control={quoteForm.control} name="text" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Quote Text</FormLabel>
-                            <FormControl><Textarea {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <FormField control={quoteForm.control} name="author" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Author (optional)</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <Button type="submit" disabled={isLoading}>
-                          {isLoading ? "Saving..." : "Save Quote"}
-                        </Button>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
-
-                <div className="grid gap-4">
-                  {quotes.map(quote => (
-                    <Card key={quote.id}>
-                      <CardContent className="p-6">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="italic">"{quote.text}"</p>
-                            {quote.author && <p className="text-sm text-muted-foreground mt-2">— {quote.author}</p>}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => { setEditingItem({ ...quote, type: 'quote' }); quoteForm.reset(quote); setDialogOpen(true); }}>
-                              <Edit size={16} />
-                            </Button>
-                            <Button size="sm" variant="destructive" onClick={() => deleteQuote(quote.id)}>
                               <Trash2 size={16} />
                             </Button>
                           </div>
