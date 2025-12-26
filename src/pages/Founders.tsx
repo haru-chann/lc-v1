@@ -78,7 +78,7 @@ const Founders = () => {
             Meet Our Founders
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto animate-fade-in-up">
-            The passionate individuals behind Listening To Mann KI Baat who are dedicated to making mental health support accessible to everyone.
+            The passionate individuals behind Listening To Mann Ki Baat who are dedicated to making mental health support accessible to everyone.
           </p>
         </div>
       </section>
