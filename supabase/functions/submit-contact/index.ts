@@ -1,6 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Error messages
+const ErrorMessages = {
+  INVALID_IP: 'Could not determine client IP. Please ensure your request includes proper headers.',
+  RATE_LIMIT_EXCEEDED: 'Too many submissions. Please try again later.',
+  INVALID_AGE: 'Please provide a valid age',
+  SUBMISSION_FAILED: 'Failed to submit. Please try again.',
+  UNEXPECTED_ERROR: 'An unexpected error occurred. Please try again.',
+  SUBMISSION_SUCCESSFUL: 'Form submitted successfully!'
+} as const;
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -47,7 +57,26 @@ serve(async (req: Request) => {
     // Get client IP for rate limiting
     const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
                      req.headers.get('x-real-ip') || 
-                     'unknown';
+                     // @ts-ignore - connection.remoteAddr is a Deno-specific property
+                     req.connection?.remoteAddr?.hostname || 
+                     null;
+
+    // Reject if no reliable IP could be determined
+    if (!clientIP) {
+      return new Response(
+        JSON.stringify({ 
+          error: ErrorMessages.INVALID_IP
+        }), 
+        { 
+          status: 400,
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          } 
+        }
+      );
+    }
+
     const ipHash = hashIP(clientIP);
 
     // Rate limiting: Check for recent submissions from this IP (max 5 per hour)
@@ -65,7 +94,7 @@ serve(async (req: Request) => {
     if (count && count >= 5) {
       console.log(`Rate limit exceeded for IP hash: ${ipHash}`);
       return new Response(
-        JSON.stringify({ error: 'Too many submissions. Please try again later.' }),
+        JSON.stringify({ error: ErrorMessages.RATE_LIMIT_EXCEEDED }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -115,7 +144,7 @@ serve(async (req: Request) => {
     const parsedAge = parseInt(age);
     if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 150) {
       return new Response(
-        JSON.stringify({ error: 'Please provide a valid age' }),
+        JSON.stringify({ error: ErrorMessages.INVALID_AGE }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -141,7 +170,7 @@ serve(async (req: Request) => {
     if (insertError) {
       console.error('Insert error:', insertError);
       return new Response(
-        JSON.stringify({ error: 'Failed to submit. Please try again.' }),
+        JSON.stringify({ error: ErrorMessages.SUBMISSION_FAILED }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -149,14 +178,14 @@ serve(async (req: Request) => {
     console.log(`Contact form submitted successfully from IP hash: ${ipHash}`);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Your information has been submitted successfully!' }),
+      JSON.stringify({ success: true, message: ErrorMessages.SUBMISSION_SUCCESSFUL }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Unexpected error:', error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }),
+      JSON.stringify({ error: ErrorMessages.UNEXPECTED_ERROR }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
