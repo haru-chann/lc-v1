@@ -109,7 +109,7 @@ Mann Ki Baat
                   <LogOut size={16} className="mr-2" />
                   Sign Out
                 </Button> : <Button onClick={() => navigate("/auth")} size="sm" className="shadow-soft">
-                  Sign In
+                  Admin Sign In
                 </Button>}
             </div>
           </div>
