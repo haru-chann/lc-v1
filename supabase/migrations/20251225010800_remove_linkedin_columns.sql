@@ -16,3 +16,9 @@ ADD COLUMN IF NOT EXISTS city text;
 ALTER TABLE public.contact_submissions 
 ALTER COLUMN email DROP NOT NULL,
 ALTER COLUMN message DROP NOT NULL;
+
+-- Add phone column to contact_submissions table
+ALTER TABLE public.contact_submissions ADD COLUMN IF NOT EXISTS phone text;
+
+-- Add end_date column to events table for multi-day events
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS end_date date;

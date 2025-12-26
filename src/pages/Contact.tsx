@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Phone, Instagram, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,13 +7,16 @@ import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
-import { useContactInfo } from "@/hooks/useContactInfo";
 
 // Form validation schema
 const contactFormSchema = z.object({
   name: z.string()
     .min(1, "Name is required")
     .max(100, "Name must be less than 100 characters")
+    .trim(),
+  phone: z.string()
+    .min(1, "Phone number is required")
+    .max(20, "Phone number must be less than 20 characters")
     .trim(),
   age: z.string()
     .min(1, "Age is required")
@@ -37,22 +40,46 @@ interface ContactInfo {
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
+    phone: "",
     age: "",
     profession: "",
     city: "",
   });
-  const [formErrors, setFormErrors] = useState<{ name?: string; age?: string; profession?: string; city?: string }>({});
+  const [formErrors, setFormErrors] = useState<{ name?: string; phone?: string; age?: string; profession?: string; city?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { contactInfo, loading } = useContactInfo();
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    email: "hello@listeningclub.com",
+    phone: "+1 (234) 567-890",
+    instagram_url: "https://instagram.com",
+  });
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchContactInfo();
+  }, []);
+
+  const fetchContactInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("contact_info")
+        .select("*")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        setContactInfo({
+          email: data.email || "hello@listeningclub.com",
+          phone: data.phone || "+1 (234) 567-890",
+          instagram_url: data.instagram_url || "https://instagram.com",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching contact info:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +89,7 @@ const Contact = () => {
     const result = contactFormSchema.safeParse(formData);
     
     if (!result.success) {
-      const errors: { name?: string; age?: string; profession?: string; city?: string } = {};
+      const errors: { name?: string; phone?: string; age?: string; profession?: string; city?: string } = {};
       result.error.errors.forEach((err) => {
         const field = err.path[0] as keyof typeof errors;
         errors[field] = err.message;
@@ -77,6 +104,7 @@ const Contact = () => {
       const { data, error } = await supabase.functions.invoke('submit-contact', {
         body: {
           name: result.data.name,
+          phone: result.data.phone,
           age: parseInt(result.data.age),
           profession: result.data.profession,
           city: result.data.city,
@@ -101,7 +129,7 @@ const Contact = () => {
         description: "Thank you for reaching out. We'll get back to you soon.",
       });
 
-      setFormData({ name: "", age: "", profession: "", city: "" });
+      setFormData({ name: "", phone: "", age: "", profession: "", city: "" });
     } catch (error: any) {
       console.error("Form submission error:", error);
       toast({
@@ -113,6 +141,14 @@ const Contact = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -155,6 +191,25 @@ const Contact = () => {
                   />
                   {formErrors.name && (
                     <p className="text-destructive text-sm mt-1">{formErrors.name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium mb-2">
+                    Phone Number
+                  </label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="Your phone number"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className={`bg-secondary/50 ${formErrors.phone ? 'border-destructive' : ''}`}
+                    disabled={isSubmitting}
+                    maxLength={20}
+                  />
+                  {formErrors.phone && (
+                    <p className="text-destructive text-sm mt-1">{formErrors.phone}</p>
                   )}
                 </div>
 

@@ -91,28 +91,40 @@ export type Database = {
       }
       contact_submissions: {
         Row: {
+          age: number | null
+          city: string | null
           created_at: string
-          email: string
+          email: string | null
           id: string
           ip_hash: string | null
-          message: string
+          message: string | null
           name: string
+          phone: string | null
+          profession: string | null
         }
         Insert: {
+          age?: number | null
+          city?: string | null
           created_at?: string
-          email: string
+          email?: string | null
           id?: string
           ip_hash?: string | null
-          message: string
+          message?: string | null
           name: string
+          phone?: string | null
+          profession?: string | null
         }
         Update: {
+          age?: number | null
+          city?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           id?: string
           ip_hash?: string | null
-          message?: string
+          message?: string | null
           name?: string
+          phone?: string | null
+          profession?: string | null
         }
         Relationships: []
       }
@@ -122,6 +134,7 @@ export type Database = {
           created_by: string | null
           date: string
           description: string
+          end_date: string | null
           id: string
           is_booking_open: boolean | null
           location: string
@@ -136,6 +149,7 @@ export type Database = {
           created_by?: string | null
           date: string
           description: string
+          end_date?: string | null
           id?: string
           is_booking_open?: boolean | null
           location: string
@@ -150,6 +164,7 @@ export type Database = {
           created_by?: string | null
           date?: string
           description?: string
+          end_date?: string | null
           id?: string
           is_booking_open?: boolean | null
           location?: string

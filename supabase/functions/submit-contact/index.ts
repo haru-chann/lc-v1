@@ -1,220 +1,163 @@
-// Import Supabase client for Edge Functions
-/// <reference path="./types.d.ts" />
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-// Define types for the request body
-interface ContactSubmission {
-  name: string;
-  age: string;
-  profession: string;
-  city: string;
-}
-
-interface ErrorResponse {
-  error: string;
-  [key: string]: any;
-}
-
-interface SuccessResponse {
-  success: boolean;
-  message: string;
-  [key: string]: any;
-}
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple hash function for IP anonymization using Web Crypto API
-const hashIP = async (ip: string): Promise<string> => {
-  const msgUint8 = new TextEncoder().encode(ip);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
-};
+// Simple hash function for IP anonymization
+function hashIP(ip: string): string {
+  let hash = 0;
+  for (let i = 0; i < ip.length; i++) {
+    const char = ip.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash.toString(16);
+}
 
 // Sanitize input - remove potential HTML/script tags
 function sanitizeInput(input: string): string {
   return input
-    .replace(/<[^>]*>/g, '')
-    .replace(/[<>]/g, '')
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/[<>]/g, '') // Remove any remaining angle brackets
     .trim();
 }
 
-// Create Supabase client
-const createSupabaseClient = () => {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-  const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
-  
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing Supabase environment variables');
-    throw new Error('Missing Supabase environment variables');
-  }
-  
-  try {
-    return createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
-    });
-  } catch (error) {
-    console.error('Failed to create Supabase client:', error);
-    throw new Error('Failed to initialize database connection');
-  }
-};
-
-// Helper function to create error response
-const createErrorResponse = (message: string, status = 400): Response => {
-  const response: ErrorResponse = { error: message };
-  return new Response(
-    JSON.stringify(response),
-    { 
-      status, 
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'application/json' 
-      } 
-    }
-  );
-};
-
-// Helper function to create success response
-const createSuccessResponse = (message: string, data: any = {}): Response => {
-  const response: SuccessResponse = { 
-    success: true, 
-    message,
-    ...data 
-  };
-  return new Response(
-    JSON.stringify(response),
-    { 
-      status: 200, 
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'application/json' 
-      } 
-    }
-  );
-};
-
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      status: 204, 
-      headers: {
-        ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Max-Age': '86400' // 24 hours
-      } 
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
-  // Only allow POST requests
   if (req.method !== 'POST') {
-    return createErrorResponse('Method not allowed', 405);
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 
   try {
-    // Get client IP from headers (behind proxy)
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-               req.headers.get('x-real-ip') || 
-               'unknown';
-    const ipHash = await hashIP(ip);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get client IP for rate limiting
+    const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+    const ipHash = hashIP(clientIP);
+
+    // Rate limiting: Check for recent submissions from this IP (max 5 per hour)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { count, error: countError } = await supabase
+      .from('contact_submissions')
+      .select('*', { count: 'exact', head: true })
+      .eq('ip_hash', ipHash)
+      .gte('created_at', oneHourAgo);
+
+    if (countError) {
+      console.error('Rate limit check error:', countError);
+    }
+
+    if (count && count >= 5) {
+      console.log(`Rate limit exceeded for IP hash: ${ipHash}`);
+      return new Response(
+        JSON.stringify({ error: 'Too many submissions. Please try again later.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Parse and validate request body
-    let body: Partial<ContactSubmission>;
-    try {
-      body = await req.json();
-    } catch (e) {
-      return createErrorResponse('Invalid JSON payload');
-    }
-
-    const { name, age, profession, city } = body;
+    const body = await req.json();
+    const { name, phone, age, profession, city } = body;
 
     // Validate required fields
-    if (!name || !age || !profession || !city) {
-      return createErrorResponse('All fields are required');
+    if (!name || !phone || !age || !profession || !city) {
+      return new Response(
+        JSON.stringify({ error: 'All fields are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Validate input lengths
+    // Validate field lengths
     if (name.length > 100) {
-      return createErrorResponse('Name must be less than 100 characters');
+      return new Response(
+        JSON.stringify({ error: 'Name must be less than 100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (phone.length > 20) {
+      return new Response(
+        JSON.stringify({ error: 'Phone number must be less than 20 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (profession.length > 100) {
-      return createErrorResponse('Profession must be less than 100 characters');
+      return new Response(
+        JSON.stringify({ error: 'Profession must be less than 100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (city.length > 100) {
-      return createErrorResponse('City must be less than 100 characters');
+      return new Response(
+        JSON.stringify({ error: 'City must be less than 100 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Validate age
     const parsedAge = parseInt(age);
     if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 150) {
-      return createErrorResponse('Please provide a valid age between 1 and 150');
+      return new Response(
+        JSON.stringify({ error: 'Please provide a valid age' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Sanitize inputs
     const sanitizedName = sanitizeInput(name);
+    const sanitizedPhone = sanitizeInput(phone);
     const sanitizedProfession = sanitizeInput(profession);
     const sanitizedCity = sanitizeInput(city);
 
-    // Create Supabase client
-    const supabase = createSupabaseClient();
-
-    // Rate limiting: Check for recent submissions from this IP (max 5 per hour)
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    
-    try {
-      const { count, error: countError } = await supabase
-        .from('contact_submissions')
-        .select('*', { count: 'exact', head: true })
-        .eq('ip_hash', ipHash)
-        .gte('created_at', oneHourAgo);
-
-      if (countError) {
-        console.error('Rate limit check error:', countError);
-      }
-
-      if (count && count >= 5) {
-        console.log(`Rate limit exceeded for IP hash: ${ipHash}`);
-        return createErrorResponse('Too many submissions. Please try again later.', 429);
-      }
-    } catch (rateLimitError) {
-      console.error('Rate limit check failed:', rateLimitError);
-      // Continue with submission if rate limiting fails
-    }
-
     // Insert submission
-    try {
-      const { error: insertError } = await supabase
-        .from('contact_submissions')
-        .insert({
-          name: sanitizedName,
-          age: parsedAge,
-          profession: sanitizedProfession,
-          city: sanitizedCity,
-          ip_hash: ipHash,
-        });
+    const { error: insertError } = await supabase
+      .from('contact_submissions')
+      .insert({
+        name: sanitizedName,
+        phone: sanitizedPhone,
+        age: parsedAge,
+        profession: sanitizedProfession,
+        city: sanitizedCity,
+        ip_hash: ipHash,
+      });
 
-      if (insertError) {
-        console.error('Database insert error:', insertError);
-        return createErrorResponse('Failed to submit. Please try again.', 500);
-      }
-
-      console.log(`Contact form submitted successfully from IP hash: ${ipHash}`);
-      return createSuccessResponse('Your information has been submitted successfully!');
-    } catch (insertError) {
-      console.error('Database insert failed:', insertError);
-      return createErrorResponse('Failed to submit. Please try again.', 500);
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to submit. Please try again.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    console.log(`Contact form submitted successfully from IP hash: ${ipHash}`);
+
+    return new Response(
+      JSON.stringify({ success: true, message: 'Your information has been submitted successfully!' }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Unexpected error:', error);
-    return createErrorResponse('An unexpected error occurred. Please try again later.', 500);
+    return new Response(
+      JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });

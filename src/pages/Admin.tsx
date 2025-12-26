@@ -25,6 +25,7 @@ const whatsappSchema = z.object({
 const eventSchema = z.object({
   name: z.string().min(1).max(200).trim(),
   date: z.string().min(1),
+  end_date: z.string().optional(),
   time: z.string().min(1).max(100).trim(),
   description: z.string().min(1).max(1000).trim(),
   location: z.string().min(1).max(200).trim(),
@@ -70,7 +71,6 @@ const founderSchema = z.object({
   work: z.string().max(500).trim().optional(),
   motto: z.string().max(500).trim().optional(),
   image_url: z.string().max(500).trim().optional(),
-  linkedin_url: z.string().max(500).trim().optional(),
   instagram_url: z.string().max(500).trim().optional(),
   twitter_url: z.string().max(500).trim().optional(),
   display_order: z.number().int().min(0).default(0),
@@ -145,6 +145,7 @@ const Admin = () => {
     defaultValues: {
       name: "",
       date: "",
+      end_date: "",
       time: "",
       description: "",
       location: "",
@@ -208,7 +209,6 @@ const Admin = () => {
       work: "",
       motto: "",
       image_url: "",
-      linkedin_url: "",
       instagram_url: "",
       twitter_url: "",
       display_order: 0,
@@ -286,71 +286,10 @@ const Admin = () => {
   };
 
   const fetchContactInfo = async () => {
-    try {
-      console.log('Fetching contact info...');
-      
-      // Fetch the contact info data
-      const { data, error } = await supabase
-        .from("contact_info")
-        .select("*")
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching contact info:', error);
-        // If table doesn't exist, create it
-        if (error.message.includes('relation "contact_info" does not exist')) {
-          console.log('Contact info table does not exist, creating...');
-          await createContactInfoTable();
-          return; // The table creation will trigger a refetch
-        }
-        throw error;
-      }
-      
-      console.log('Fetched contact info:', data);
-      
-      if (data) {
-        setContactInfo(data);
-        // Ensure all fields are present in the form
-        contactForm.reset({
-          email: data.email || '',
-          phone: data.phone || '',
-          instagram_url: data.instagram_url || ''
-        });
-      } else {
-        console.log('No contact info found, initializing with default values');
-        // Initialize with empty values if no data exists
-        const defaultData = {
-          email: '',
-          phone: '',
-          instagram_url: '',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        // Insert default record
-        const { error: insertError } = await supabase
-          .from('contact_info')
-          .insert([defaultData]);
-          
-        if (insertError) {
-          console.error('Error creating default contact info:', insertError);
-          throw insertError;
-        }
-        
-        // Reset form with default values
-        contactForm.reset({
-          email: '',
-          phone: '',
-          instagram_url: ''
-        });
-      }
-    } catch (error) {
-      console.error('Error in fetchContactInfo:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load contact information',
-        variant: 'destructive'
-      });
+    const { data } = await supabase.from("contact_info").select("*").maybeSingle();
+    if (data) {
+      setContactInfo(data);
+      contactForm.reset(data);
     }
   };
 
@@ -428,12 +367,13 @@ const Admin = () => {
       return;
     }
 
-    const headers = ["Name", "Age", "Profession", "City", "Submitted At"];
+    const headers = ["Name", "Phone", "Age", "Profession", "City", "Submitted At"];
     const csvRows = [headers.join(",")];
 
     filtered.forEach((submission) => {
       const row = [
         `"${(submission.name || "").replace(/"/g, '""')}"`,
+        `"${(submission.phone || "").replace(/"/g, '""')}"`,
         submission.age || "",
         `"${(submission.profession || "").replace(/"/g, '""')}"`,
         `"${(submission.city || "").replace(/"/g, '""')}"`,
@@ -480,6 +420,7 @@ const Admin = () => {
       const eventData = {
         name: values.name,
         date: values.date,
+        end_date: values.end_date || null,
         time: values.time,
         description: values.description,
         location: values.location,
@@ -632,175 +573,26 @@ const Admin = () => {
     }
   };
 
-  const createContactInfoTable = async () => {
-    try {
-      console.log('Initializing contact info...');
-      
-      // Insert a default record (table should already exist or be created via migrations)
-      const defaultData = {
-        email: '',
-        phone: '',
-        instagram_url: '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      
-      const { error: insertError } = await supabase
-        .from('contact_info')
-        .insert([defaultData]);
-        
-      if (insertError) {
-        console.error('Error inserting default contact info:', insertError);
-        throw insertError;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error in createContactInfoTable:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to initialize contact information',
-        variant: 'destructive'
-      });
-      return false;
-    }
-  };
-
   const onContactSubmit = async (values: ContactFormValues) => {
     setIsLoading(true);
-    console.log('Submitting contact form with values:', values);
-    
     try {
-      // Prepare the data to be saved (without ID)
-      const contactData = {
-        email: values.email?.trim() || null,
-        phone: values.phone?.trim() || null,
-        instagram_url: values.instagram_url?.trim() || null,
-        updated_at: new Date().toISOString()
-      };
-      
-      console.log('Prepared contact data for save:', contactData);
-      
-      // Check if the table exists by trying to fetch any record
-      const { data: existingData, error: fetchError } = await supabase
-        .from("contact_info")
-        .select("*")
-        .limit(1)
-        .maybeSingle();
-      
-      // If table doesn't exist, create it
-      if (fetchError?.message?.includes('does not exist')) {
-        console.log('Contact info table does not exist, creating...');
-        const created = await createContactInfoTable();
-        if (!created) {
-          throw new Error('Failed to create contact info table');
-        }
-        // After creating table, try to insert the first record
-        const { data: newData, error: insertError } = await supabase
-          .from("contact_info")
-          .insert([contactData])
-          .select()
-          .single();
-          
-        if (insertError) {
-          console.error('Error inserting contact info:', insertError);
-          throw new Error(`Failed to save contact information: ${insertError.message}`);
-        }
-        
-        console.log('Successfully saved contact data:', newData);
-        setContactInfo(newData);
-        
-        toast({
-          title: "Success",
-          description: "Contact information updated successfully"
-        });
-        
-        contactForm.reset({
-          email: newData.email || '',
-          phone: newData.phone || '',
-          instagram_url: newData.instagram_url || ''
-        });
-      } else if (fetchError) {
-        console.error('Error checking for existing contact info:', fetchError);
-        throw fetchError;
-      } else {
-        // Table exists and we have existing data or it's empty
-        console.log('Existing contact data:', existingData);
-        
-        if (existingData) {
-          // Update existing record
-          const { data: updatedData, error: updateError } = await supabase
-            .from("contact_info")
-            .update(contactData)
-            .eq("id", existingData.id)
-            .select()
-            .single();
-
-          if (updateError) {
-            console.error("Supabase update error:", updateError);
-            throw new Error(`Failed to update contact information: ${updateError.message}`);
-          }
-          
-          console.log('Successfully updated contact data:', updatedData);
-          setContactInfo(updatedData);
-          
-          toast({
-            title: "Success",
-            description: "Contact information updated successfully"
-          });
-          
-          contactForm.reset({
-            email: updatedData.email || '',
-            phone: updatedData.phone || '',
-            instagram_url: updatedData.instagram_url || ''
-          });
-        } else {
-          // No existing data, insert new record
-          const { data: newData, error: insertError } = await supabase
-            .from("contact_info")
-            .insert([contactData])
-            .select()
-            .single();
-            
-          if (insertError) {
-            console.error('Error inserting contact info:', insertError);
-            throw new Error(`Failed to save contact information: ${insertError.message}`);
-          }
-          
-          console.log('Successfully saved contact data:', newData);
-          setContactInfo(newData);
-          
-          toast({
-            title: "Success",
-            description: "Contact information updated successfully"
-          });
-          
-          contactForm.reset({
-            email: newData.email || '',
-            phone: newData.phone || '',
-            instagram_url: newData.instagram_url || ''
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error('Error saving contact information:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save contact information",
-        variant: "destructive"
+      const { error } = await supabase.from("contact_info").upsert({
+        id: contactInfo?.id || undefined,
+        email: values.email || null,
+        phone: values.phone || null,
+        instagram_url: values.instagram_url || null,
       });
+      if (error) throw error;
+      toast({ title: "Success", description: "Contact information updated successfully" });
+      fetchContactInfo();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const uploadImage = async (file: File): Promise<string | null> => {
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast({ title: "Error", description: "Image file must be less than 5MB", variant: "destructive" });
-      return null;
-    }
-
+  const uploadImage = async (file: File) => {
     setUploadingImage(true);
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
@@ -895,7 +687,6 @@ const Admin = () => {
         work: values.work || null,
         motto: values.motto || null,
         image_url: imageUrl,
-        linkedin_url: values.linkedin_url || null,
         instagram_url: values.instagram_url || null,
         twitter_url: values.twitter_url || null,
         display_order: values.display_order,
@@ -1292,19 +1083,27 @@ const Admin = () => {
                         <div className="grid grid-cols-2 gap-4">
                           <FormField control={eventForm.control} name="date" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Date</FormLabel>
+                              <FormLabel>Start Date</FormLabel>
                               <FormControl><Input type="date" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
-                          <FormField control={eventForm.control} name="time" render={({ field }) => (
+                          <FormField control={eventForm.control} name="end_date" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Time</FormLabel>
-                              <FormControl><Input placeholder="6:00 PM - 7:30 PM" {...field} /></FormControl>
+                              <FormLabel>End Date (optional)</FormLabel>
+                              <FormControl><Input type="date" {...field} /></FormControl>
+                              <FormDescription>For multi-day events</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )} />
                         </div>
+                        <FormField control={eventForm.control} name="time" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Time</FormLabel>
+                            <FormControl><Input placeholder="6:00 PM - 7:30 PM" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
                         <FormField control={eventForm.control} name="location" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Location</FormLabel>
@@ -1361,7 +1160,9 @@ const Admin = () => {
                         <div className="flex justify-between items-start">
                           <div>
                             <h3 className="font-bold text-lg">{event.name}</h3>
-                            <p className="text-sm text-muted-foreground">{event.date} • {event.time}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {event.date}{event.end_date && ` - ${event.end_date}`} • {event.time}
+                            </p>
                             <p className="text-sm">{event.location}</p>
                             {event.map_link && <p className="text-xs text-primary mt-1">Has map link</p>}
                           </div>
@@ -1883,13 +1684,6 @@ const Admin = () => {
                         <div className="border-t pt-4">
                           <h4 className="font-medium mb-3">Social Media Links</h4>
                           <div className="grid gap-4">
-                            <FormField control={founderForm.control} name="linkedin_url" render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>LinkedIn URL</FormLabel>
-                                <FormControl><Input placeholder="https://linkedin.com/in/..." {...field} /></FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )} />
                             <FormField control={founderForm.control} name="instagram_url" render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Instagram URL</FormLabel>
@@ -2359,6 +2153,7 @@ const Admin = () => {
                       <thead>
                         <tr className="border-b border-border">
                           <th className="text-left p-3 font-semibold">Name</th>
+                          <th className="text-left p-3 font-semibold">Phone</th>
                           <th className="text-left p-3 font-semibold">Age</th>
                           <th className="text-left p-3 font-semibold">Profession</th>
                           <th className="text-left p-3 font-semibold">City</th>
@@ -2369,6 +2164,7 @@ const Admin = () => {
                         {contactSubmissions.map((submission) => (
                           <tr key={submission.id} className="border-b border-border hover:bg-muted/50">
                             <td className="p-3">{submission.name}</td>
+                            <td className="p-3">{submission.phone}</td>
                             <td className="p-3">{submission.age}</td>
                             <td className="p-3">{submission.profession}</td>
                             <td className="p-3">{submission.city}</td>
