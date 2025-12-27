@@ -147,7 +147,7 @@ Mann Ki Baat
               navigate("/auth");
               setIsOpen(false);
             }} className="w-full shadow-soft">
-                    Sign In
+                    Admin Sign In
                   </Button>}
               </div>
             </div>
